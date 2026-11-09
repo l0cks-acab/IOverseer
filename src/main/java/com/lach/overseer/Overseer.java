@@ -3,7 +3,7 @@ package com.lach.overseer;
 import com.lach.overseer.net.Net;
 import com.lach.overseer.server.ServerEvents;
 import com.mojang.logging.LogUtils;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -23,7 +23,7 @@ public class Overseer {
         NeoForge.EVENT_BUS.register(ServerEvents.class);
     }
 
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MODID, path);
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MODID, path);
     }
 }

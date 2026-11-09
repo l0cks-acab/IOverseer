@@ -57,10 +57,8 @@ public class MonitorScreenBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider regs) {
-        super.loadAdditional(tag, regs);
-        if (tag.contains("entries", Tag.TAG_LIST)) {
-            entries = MachineEntry.CODEC.listOf().parse(NbtOps.INSTANCE, tag.get("entries")).result().orElse(List.of());
-        }
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput in) {
+        super.loadAdditional(in);
+        in.read("entries", MachineEntry.CODEC.listOf()).ifPresent(l -> entries = l);
     }
 }

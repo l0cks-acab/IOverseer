@@ -37,17 +37,16 @@ public final class Registry {
                     .networkSynchronized(GlobalPos.STREAM_CODEC.apply(ByteBufCodecs.list()))
                     .build());
 
-    public static final DeferredItem<MonitorTabletItem> TABLET = ITEMS.register("monitor_tablet",
-            () -> new MonitorTabletItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<MonitorTabletItem> TABLET = ITEMS.registerItem("monitor_tablet",
+            MonitorTabletItem::new, p -> p.stacksTo(1));
 
-    public static final DeferredBlock<MonitorScreenBlock> SCREEN = BLOCKS.register("monitor_screen",
-            () -> new MonitorScreenBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5f, 6f)
-                    .sound(SoundType.METAL).requiresCorrectToolForDrops().lightLevel(s -> 6)));
+    public static final DeferredBlock<MonitorScreenBlock> SCREEN = BLOCKS.registerBlock("monitor_screen",
+            MonitorScreenBlock::new, p -> p.mapColor(MapColor.METAL).strength(3.5f, 6f)
+                    .sound(SoundType.METAL).requiresCorrectToolForDrops().lightLevel(s -> 6));
     public static final DeferredItem<BlockItem> SCREEN_ITEM = ITEMS.registerSimpleBlockItem(SCREEN);
 
-    @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MonitorScreenBlockEntity>> SCREEN_BE = BES.register("monitor_screen",
-            () -> BlockEntityType.Builder.of(MonitorScreenBlockEntity::new, SCREEN.get()).build(null));
+            () -> new BlockEntityType<>(MonitorScreenBlockEntity::new, SCREEN.get()));
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("main", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.overseer"))

@@ -4,14 +4,14 @@ import com.lach.overseer.machine.MachineEntry;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Machines the player ctrl-clicked to find in the world. Client only, cleared on reach. */
 public final class Highlights {
-    public record Target(GlobalPos pos, ResourceLocation block) {}
+    public record Target(GlobalPos pos, Identifier block) {}
 
     static final Map<GlobalPos, Target> TARGETS = new LinkedHashMap<>();
 

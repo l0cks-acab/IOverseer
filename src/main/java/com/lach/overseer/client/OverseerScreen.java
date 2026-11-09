@@ -3,7 +3,8 @@ package com.lach.overseer.client;
 import com.lach.overseer.machine.MachineEntry;
 import com.lach.overseer.machine.MachineStatus;
 import com.lach.overseer.net.Net;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
@@ -18,7 +19,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.*;
 
@@ -52,12 +53,12 @@ public class OverseerScreen extends Screen {
     protected void init() {
         left = (width - W) / 2;
         top = (height - H) / 2;
-        PacketDistributor.sendToServer(new Net.Watch(source));
+        ClientPacketDistributor.sendToServer(new Net.Watch(source));
     }
 
     @Override
     public void removed() {
-        PacketDistributor.sendToServer(new Net.Unwatch());
+        ClientPacketDistributor.sendToServer(new Net.Unwatch());
     }
 
     @Override
@@ -109,22 +110,22 @@ public class OverseerScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics g, int mx, int my, float pt) {
-        super.renderBackground(g, mx, my, pt);
+    public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float pt) {
+        super.extractBackground(g, mx, my, pt);
         Theme.panel(g, left, top, W, H);
     }
 
     @Override
-    public void render(GuiGraphics g, int mx, int my, float pt) {
-        super.render(g, mx, my, pt);
+    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
+        super.extractRenderState(g, mx, my, pt);
         int x = left, y = top;
         // title
-        g.drawString(font, title, x + 12, y + 9, Theme.GOLD, false);
+        g.text(font, title, x + 12, y + 9, Theme.GOLD, false);
         int tw = font.width(title);
         Theme.trace(g, x + 16 + tw, y + 13, x + DX - 8);
         Component src = source.isPresent() ? Component.translatable("overseer.gui.source_screen", radius)
                 : Component.translatable("overseer.gui.source_tablet", radius);
-        g.drawString(font, src, x + DX, y + 9, Theme.AMBER_DIM, false);
+        g.text(font, src, x + DX, y + 9, Theme.AMBER_DIM, false);
 
         // filter tabs
         int tabW = LW / FILTERS.length;
@@ -136,21 +137,21 @@ public class OverseerScreen extends Screen {
             int count = s == null ? entries.size() : (int) entries.stream().filter(e -> e.status() == s).count();
             String label = (s == null ? Component.translatable("overseer.filter.all").getString() : Component.translatable("overseer.filter." + s.key).getString()) + " " + count;
             int color = s == null ? Theme.TEXT : s.color;
-            g.pose().pushPose();
+            g.pose().pushMatrix();
             float sc = Math.min(1f, (tabW - 6) / (float) font.width(label));
-            g.pose().translate(bx + (tabW - 2) / 2f, by + 3.5f, 0);
-            g.pose().scale(sc, sc, 1);
-            g.drawString(font, label, -font.width(label) / 2, 0, color, false);
-            g.pose().popPose();
+            g.pose().translate(bx + (tabW - 2) / 2f, by + 3.5f);
+            g.pose().scale(sc, sc);
+            g.text(font, label, -font.width(label) / 2, 0, color, false);
+            g.pose().popMatrix();
         }
 
         // list
         Theme.screen(g, x + LX, y + LY, LW, LH);
         g.enableScissor(x + LX, y + LY, x + LX + LW, y + LY + LH);
         if (!received) {
-            g.drawCenteredString(font, Component.translatable("overseer.gui.scanning"), x + LX + LW / 2, y + LY + LH / 2 - 4, Theme.AMBER_DIM);
+            g.centeredText(font, Component.translatable("overseer.gui.scanning"), x + LX + LW / 2, y + LY + LH / 2 - 4, Theme.AMBER_DIM);
         } else if (rows.isEmpty()) {
-            g.drawCenteredString(font, Component.translatable("overseer.gui.none"), x + LX + LW / 2, y + LY + LH / 2 - 4, Theme.AMBER_DIM);
+            g.centeredText(font, Component.translatable("overseer.gui.none"), x + LX + LW / 2, y + LY + LH / 2 - 4, Theme.AMBER_DIM);
         }
         int ry = y + LY - (int) scroll;
         Row hoverRow = null;
@@ -160,7 +161,7 @@ public class OverseerScreen extends Screen {
             if (ry + rh >= y + LY && ry <= y + LY + LH) {
                 if (r.header != null) {
                     g.fill(x + LX, ry, x + LX + LW, ry + HEAD, 0x40E8B23A);
-                    g.drawString(font, r.header.toUpperCase(Locale.ROOT), x + LX + 4, ry + 2, Theme.GOLD, false);
+                    g.text(font, r.header.toUpperCase(Locale.ROOT), x + LX + 4, ry + 2, Theme.GOLD, false);
                 } else {
                     MachineEntry e = r.entry;
                     boolean sel = key(e).equals(selected);
@@ -169,19 +170,19 @@ public class OverseerScreen extends Screen {
                     if (sel) g.fill(x + LX, ry, x + LX + LW, ry + ROW, 0x50E8B23A);
                     else if (hov) g.fill(x + LX, ry, x + LX + LW, ry + ROW, 0x22FFFFFF);
                     if (Highlights.has(key(e))) g.fill(x + LX, ry, x + LX + 2, ry + ROW, Theme.GOLD_HI);
-                    Block b = BuiltInRegistries.BLOCK.get(e.block());
+                    Block b = BuiltInRegistries.BLOCK.getValue(e.block());
                     ItemStack icon = new ItemStack(b.asItem());
-                    g.renderItem(icon, x + LX + 4, ry + 1);
+                    g.item(icon, x + LX + 4, ry + 1);
                     String name = b.getName().getString();
                     if (e.pinned()) name = "★ " + name;
                     int nameW = LW - 24 - 66;
-                    g.drawString(font, font.plainSubstrByWidth(name, nameW), x + LX + 23, ry + 2, Theme.TEXT, false);
+                    g.text(font, font.plainSubstrByWidth(name, nameW), x + LX + 23, ry + 2, Theme.TEXT, false);
                     String where = sameDim(e) ? (int) Math.sqrt(e.pos().distSqr(me)) + "m" : e.dim().getPath();
-                    g.drawString(font, where, x + LX + 23, ry + 10, Theme.AMBER_DIM, false);
+                    g.text(font, where, x + LX + 23, ry + 10, Theme.AMBER_DIM, false);
                     // status pill
                     int px = x + LX + LW - 64;
                     g.fill(px, ry + 4, px + 6, ry + 10, e.status().color);
-                    g.drawString(font, font.plainSubstrByWidth(Component.translatable("overseer.status." + e.status().key).getString(), 56), px + 9, ry + 3, e.status().color, false);
+                    g.text(font, font.plainSubstrByWidth(Component.translatable("overseer.status." + e.status().key).getString(), 56), px + 9, ry + 3, e.status().color, false);
                 }
             }
             ry += rh;
@@ -198,15 +199,15 @@ public class OverseerScreen extends Screen {
         renderDetails(g, mx, my);
 
         // footer
-        g.drawString(font, Component.translatable("overseer.gui.hint"), x + 12, y + H - 15, Theme.AMBER_DIM, false);
+        g.text(font, Component.translatable("overseer.gui.hint"), x + 12, y + H - 15, Theme.AMBER_DIM, false);
 
-        if (hoverRow != null && hasControlDown()) {
-            g.renderTooltip(font, Component.translatable(Highlights.has(key(hoverRow.entry)) ? "overseer.gui.unhighlight" : "overseer.gui.highlight"), mx, my);
+        if (hoverRow != null && minecraft.hasControlDown()) {
+            g.setTooltipForNextFrame(font, Component.translatable(Highlights.has(key(hoverRow.entry)) ? "overseer.gui.unhighlight" : "overseer.gui.highlight"), mx, my);
         }
     }
 
     private boolean sameDim(MachineEntry e) {
-        return minecraft.level != null && minecraft.level.dimension().location().equals(e.dim());
+        return minecraft.level != null && minecraft.level.dimension().identifier().equals(e.dim());
     }
 
     private MachineEntry selectedEntry() {
@@ -215,48 +216,48 @@ public class OverseerScreen extends Screen {
         return null;
     }
 
-    private void renderDetails(GuiGraphics g, int mx, int my) {
+    private void renderDetails(GuiGraphicsExtractor g, int mx, int my) {
         int x = left + DX, y = top + DY;
         Theme.screen(g, x, y, DW, DH);
         MachineEntry e = selectedEntry();
         if (e == null) {
             List<FormattedCharSequence> l = font.split(Component.translatable("overseer.gui.pick"), DW - 10);
             int yy = y + DH / 2 - l.size() * 5;
-            for (FormattedCharSequence s : l) { g.drawCenteredString(font, s, x + DW / 2, yy, Theme.AMBER_DIM); yy += 10; }
+            for (FormattedCharSequence s : l) { g.centeredText(font, s, x + DW / 2, yy, Theme.AMBER_DIM); yy += 10; }
             return;
         }
-        Block b = BuiltInRegistries.BLOCK.get(e.block());
-        g.pose().pushPose();
-        g.pose().translate(x + DW / 2f - 12, y + 5, 0);
-        g.pose().scale(1.5f, 1.5f, 1);
-        g.renderItem(new ItemStack(b.asItem()), 0, 0);
-        g.pose().popPose();
+        Block b = BuiltInRegistries.BLOCK.getValue(e.block());
+        g.pose().pushMatrix();
+        g.pose().translate(x + DW / 2f - 12, y + 5);
+        g.pose().scale(1.5f, 1.5f);
+        g.item(new ItemStack(b.asItem()), 0, 0);
+        g.pose().popMatrix();
         int yy = y + 32;
         for (FormattedCharSequence s : font.split(b.getName(), DW - 8)) {
-            g.drawCenteredString(font, s, x + DW / 2, yy, Theme.TEXT);
+            g.centeredText(font, s, x + DW / 2, yy, Theme.TEXT);
             yy += 10;
         }
-        g.drawCenteredString(font, modName(e.block().getNamespace()), x + DW / 2, yy, Theme.GOLD_DIM);
+        g.centeredText(font, modName(e.block().getNamespace()), x + DW / 2, yy, Theme.GOLD_DIM);
         yy += 13;
         g.fill(x + 5, yy, x + 11, yy + 6, e.status().color);
-        g.drawString(font, Component.translatable("overseer.status." + e.status().key), x + 14, yy - 1, e.status().color, false);
+        g.text(font, Component.translatable("overseer.status." + e.status().key), x + 14, yy - 1, e.status().color, false);
         yy += 11;
         BlockPos p = e.pos();
-        g.drawString(font, p.getX() + " " + p.getY() + " " + p.getZ(), x + 5, yy, Theme.AMBER, false);
+        g.text(font, p.getX() + " " + p.getY() + " " + p.getZ(), x + 5, yy, Theme.AMBER, false);
         yy += 10;
-        if (!sameDim(e)) { g.drawString(font, e.dim().getPath(), x + 5, yy, Theme.AMBER_DIM, false); yy += 10; }
+        if (!sameDim(e)) { g.text(font, e.dim().getPath(), x + 5, yy, Theme.AMBER_DIM, false); yy += 10; }
         if (e.hasEnergy()) {
-            g.drawString(font, fmt(e.energy()) + " / " + fmt(e.energyMax()) + " FE", x + 5, yy, Theme.TEXT, false);
+            g.text(font, fmt(e.energy()) + " / " + fmt(e.energyMax()) + " FE", x + 5, yy, Theme.TEXT, false);
             Theme.bar(g, x + 5, yy + 9, DW - 10, 5, e.energy() / (float) e.energyMax(), 0xFFE5484D);
             yy += 17;
         }
         if (e.hasFluid()) {
-            g.drawString(font, fmt(e.fluid()) + " / " + fmt(e.fluidMax()) + " mB", x + 5, yy, Theme.TEXT, false);
+            g.text(font, fmt(e.fluid()) + " / " + fmt(e.fluidMax()) + " mB", x + 5, yy, Theme.TEXT, false);
             Theme.bar(g, x + 5, yy + 9, DW - 10, 5, e.fluid() / (float) e.fluidMax(), 0xFF3E8FE0);
             yy += 17;
         }
         if (e.hasItems()) {
-            g.drawString(font, Component.translatable("overseer.gui.slots", e.slotsUsed(), e.slots()), x + 5, yy, Theme.TEXT, false);
+            g.text(font, Component.translatable("overseer.gui.slots", e.slotsUsed(), e.slots()), x + 5, yy, Theme.TEXT, false);
         }
         // buttons
         int by = y + DH - 32;
@@ -265,10 +266,10 @@ public class OverseerScreen extends Screen {
         drawBtn(g, x + 5, by + 15, DW - 10, Component.translatable(e.pinned() ? "overseer.gui.unpin" : "overseer.gui.pin"), e.pinned(), mx, my);
     }
 
-    private void drawBtn(GuiGraphics g, int x, int y, int w, Component label, boolean active, int mx, int my) {
+    private void drawBtn(GuiGraphicsExtractor g, int x, int y, int w, Component label, boolean active, int mx, int my) {
         boolean hover = mx >= x && mx < x + w && my >= y && my < y + 13;
         Theme.button(g, x, y, w, 13, active, hover);
-        g.drawCenteredString(font, label, x + w / 2, y + 3, active ? Theme.GOLD_HI : Theme.TEXT);
+        g.centeredText(font, label, x + w / 2, y + 3, active ? Theme.GOLD_HI : Theme.TEXT);
     }
 
     private static String fmt(long v) {
@@ -279,8 +280,9 @@ public class OverseerScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
-        if (button != 0) return super.mouseClicked(mx, my, button);
+    public boolean mouseClicked(MouseButtonEvent ev, boolean dbl) {
+        double mx = ev.x(), my = ev.y();
+        if (ev.button() != 0) return super.mouseClicked(ev, dbl);
         int x = left, y = top;
         int tabW = LW / FILTERS.length;
         for (int i = 0; i < FILTERS.length; i++) {
@@ -298,7 +300,7 @@ public class OverseerScreen extends Screen {
                 int rh = r.header != null ? HEAD : ROW;
                 if (r.entry != null && my >= ry && my < ry + rh) {
                     selected = key(r.entry);
-                    if (hasControlDown()) {
+                    if (ev.hasControlDown()) {
                         boolean on = Highlights.toggle(r.entry);
                         minecraft.getSoundManager().play(SimpleSoundInstance.forUI(on ? SoundEvents.NOTE_BLOCK_CHIME.value() : SoundEvents.NOTE_BLOCK_BASS.value(), on ? 1.5f : 0.8f));
                     } else click();
@@ -316,12 +318,12 @@ public class OverseerScreen extends Screen {
                 return true;
             }
             if (mx >= bx && mx < bx + bw && my >= by + 15 && my < by + 28) {
-                PacketDistributor.sendToServer(new Net.TogglePin(key(e)));
+                ClientPacketDistributor.sendToServer(new Net.TogglePin(key(e)));
                 click();
                 return true;
             }
         }
-        return super.mouseClicked(mx, my, button);
+        return super.mouseClicked(ev, dbl);
     }
 
     private void click() {

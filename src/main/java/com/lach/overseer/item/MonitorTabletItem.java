@@ -8,7 +8,6 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,10 +24,9 @@ public class MonitorTabletItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (level.isClientSide) com.lach.overseer.client.ClientHooks.openTablet();
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        if (level.isClientSide()) com.lach.overseer.client.ClientHooks.openTablet();
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -38,21 +36,22 @@ public class MonitorTabletItem extends Item {
         Level level = ctx.getLevel();
         BlockEntity be = level.getBlockEntity(ctx.getClickedPos());
         if (be == null || !Machines.isMachine(level, be)) {
-            if (!level.isClientSide) player.displayClientMessage(Component.translatable("overseer.msg.not_machine"), true);
-            return InteractionResult.sidedSuccess(level.isClientSide);
+            if (!level.isClientSide()) player.sendOverlayMessage(Component.translatable("overseer.msg.not_machine"));
+            return InteractionResult.SUCCESS;
         }
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             boolean pinned = Subscriptions.togglePin(ctx.getItemInHand(), GlobalPos.of(level.dimension(), ctx.getClickedPos()));
-            player.displayClientMessage(Component.translatable(pinned ? "overseer.msg.pinned" : "overseer.msg.unpinned"), true);
+            player.sendOverlayMessage(Component.translatable(pinned ? "overseer.msg.pinned" : "overseer.msg.unpinned"));
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, TooltipContext ctx, net.minecraft.world.item.component.TooltipDisplay display,
+                                java.util.function.Consumer<Component> tip, TooltipFlag flag) {
         int pins = stack.getOrDefault(Registry.PINS.get(), List.of()).size();
-        tip.add(Component.translatable("item.overseer.monitor_tablet.tip1").withStyle(ChatFormatting.GRAY));
-        tip.add(Component.translatable("item.overseer.monitor_tablet.tip2").withStyle(ChatFormatting.GRAY));
-        if (pins > 0) tip.add(Component.translatable("item.overseer.monitor_tablet.pins", pins).withStyle(ChatFormatting.GOLD));
+        tip.accept(Component.translatable("item.overseer.monitor_tablet.tip1").withStyle(ChatFormatting.GRAY));
+        tip.accept(Component.translatable("item.overseer.monitor_tablet.tip2").withStyle(ChatFormatting.GRAY));
+        if (pins > 0) tip.accept(Component.translatable("item.overseer.monitor_tablet.pins", pins).withStyle(ChatFormatting.GOLD));
     }
 }

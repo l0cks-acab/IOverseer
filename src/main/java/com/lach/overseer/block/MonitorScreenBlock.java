@@ -43,8 +43,8 @@ public class MonitorScreenBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (level.isClientSide) com.lach.overseer.client.ClientHooks.openScreen(pos);
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        if (level.isClientSide()) com.lach.overseer.client.ClientHooks.openScreen(pos);
+        return InteractionResult.SUCCESS;
     }
 
     @Nullable
@@ -57,7 +57,7 @@ public class MonitorScreenBlock extends HorizontalDirectionalBlock implements En
     @Override
     @SuppressWarnings("unchecked")
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || type != Registry.SCREEN_BE.get()) return null;
+        if (level.isClientSide() || type != Registry.SCREEN_BE.get()) return null;
         return (l, p, s, be) -> ((MonitorScreenBlockEntity) be).serverTick();
     }
 }

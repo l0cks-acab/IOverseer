@@ -51,11 +51,11 @@ public final class Subscriptions {
     public static void togglePin(ServerPlayer p, GlobalPos pos) {
         ItemStack tablet = findTablet(p);
         if (tablet.isEmpty()) {
-            p.displayClientMessage(Component.translatable("overseer.msg.need_tablet"), true);
+            p.sendOverlayMessage(Component.translatable("overseer.msg.need_tablet"));
             return;
         }
         boolean pinned = togglePin(tablet, pos);
-        p.displayClientMessage(Component.translatable(pinned ? "overseer.msg.pinned" : "overseer.msg.unpinned"), true);
+        p.sendOverlayMessage(Component.translatable(pinned ? "overseer.msg.pinned" : "overseer.msg.unpinned"));
         Sub s = SUBS.get(p.getUUID());
         if (s != null) send(p, s);
     }
@@ -79,7 +79,7 @@ public final class Subscriptions {
             ItemStack s = p.getItemInHand(h);
             if (s.is(Registry.TABLET.get())) return s;
         }
-        for (ItemStack s : p.getInventory().items) if (s.is(Registry.TABLET.get())) return s;
+        for (ItemStack s : p.getInventory().getNonEquipmentItems()) if (s.is(Registry.TABLET.get())) return s;
         return ItemStack.EMPTY;
     }
 
@@ -89,7 +89,7 @@ public final class Subscriptions {
     }
 
     private static void send(ServerPlayer p, Sub s) {
-        ServerLevel level = p.serverLevel();
+        ServerLevel level = (ServerLevel) p.level();
         int r = Config.SCAN_RADIUS.get();
         BlockPos center = s.screen.orElse(p.blockPosition());
         List<MachineEntry> list = Machines.scan(level, center, r, pins(p));
@@ -116,7 +116,7 @@ public final class Subscriptions {
         Map<GlobalPos, MachineStatus> last = LAST.computeIfAbsent(p.getUUID(), k -> new HashMap<>());
         last.keySet().retainAll(pins);
         for (GlobalPos gp : pins) {
-            ServerLevel lvl = p.server.getLevel(gp.dimension());
+            ServerLevel lvl = p.level().getServer().getLevel(gp.dimension());
             if (lvl == null || !lvl.isLoaded(gp.pos())) continue;
             var be = lvl.getBlockEntity(gp.pos());
             if (be == null) continue;

@@ -22,7 +22,6 @@ public final class ClientHooks {
     }
 
     public static void alert(Net.Alert a) {
-        Minecraft mc = Minecraft.getInstance();
-        mc.getToasts().addToast(new AlertToast(a.entry()));
+        Minecraft.getInstance().getToastManager().addToast(new AlertToast(a.entry()));
     }
 }

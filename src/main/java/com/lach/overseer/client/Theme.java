@@ -1,6 +1,6 @@
 package com.lach.overseer.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /** Mekanism-style bevelled steel panels with AE2-style circuit lines, in gold. */
 public final class Theme {
@@ -19,7 +19,7 @@ public final class Theme {
     private Theme() {}
 
     /** Outer machine panel: dark rim, raised bevel, gold trim, corner bolts. */
-    public static void panel(GuiGraphics g, int x, int y, int w, int h) {
+    public static void panel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         g.fill(x, y, x + w, y + h, STEEL_DARK);
         g.fill(x + 1, y + 1, x + w - 1, y + h - 1, STEEL);
         // bevel
@@ -37,7 +37,7 @@ public final class Theme {
     }
 
     /** Recessed screen well with faint gold grid, like an AE2 terminal. */
-    public static void screen(GuiGraphics g, int x, int y, int w, int h) {
+    public static void screen(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, STEEL_DARK);
         g.fill(x - 1, y + h, x + w + 1, y + h + 1, STEEL_HI);
         g.fill(x + w, y - 1, x + w + 1, y + h + 1, STEEL_HI);
@@ -47,26 +47,26 @@ public final class Theme {
         for (int gy = y + 8; gy < y + h; gy += 8) g.fill(x, gy, x + w, gy + 1, grid);
     }
 
-    public static void outline(GuiGraphics g, int x, int y, int w, int h, int c) {
+    public static void outline(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) {
         g.fill(x, y, x + w, y + 1, c);
         g.fill(x, y + h - 1, x + w, y + h, c);
         g.fill(x, y, x + 1, y + h, c);
         g.fill(x + w - 1, y, x + w, y + h, c);
     }
 
-    public static void bolt(GuiGraphics g, int x, int y) {
+    public static void bolt(GuiGraphicsExtractor g, int x, int y) {
         g.fill(x, y, x + 3, y + 3, GOLD_DIM);
         g.fill(x, y, x + 2, y + 2, GOLD);
         g.fill(x, y, x + 1, y + 1, GOLD_HI);
     }
 
     /** Small AE2-ish trace line with a node at the end. */
-    public static void trace(GuiGraphics g, int x0, int y, int x1) {
+    public static void trace(GuiGraphicsExtractor g, int x0, int y, int x1) {
         g.fill(x0, y, x1, y + 1, GOLD_DIM);
         g.fill(x1 - 1, y - 1, x1 + 2, y + 2, GOLD);
     }
 
-    public static void bar(GuiGraphics g, int x, int y, int w, int h, float frac, int color) {
+    public static void bar(GuiGraphicsExtractor g, int x, int y, int w, int h, float frac, int color) {
         g.fill(x, y, x + w, y + h, STEEL_DARK);
         g.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF14120E);
         int fw = Math.round((w - 2) * Math.max(0, Math.min(1, frac)));
@@ -76,7 +76,7 @@ public final class Theme {
         }
     }
 
-    public static void button(GuiGraphics g, int x, int y, int w, int h, boolean active, boolean hover) {
+    public static void button(GuiGraphicsExtractor g, int x, int y, int w, int h, boolean active, boolean hover) {
         g.fill(x, y, x + w, y + h, STEEL_DARK);
         g.fill(x + 1, y + 1, x + w - 1, y + h - 1, active ? 0xFF4A3A14 : hover ? STEEL_LIGHT : STEEL);
         g.fill(x + 1, y + 1, x + w - 1, y + 2, active ? GOLD : STEEL_HI);

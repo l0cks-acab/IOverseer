@@ -5,17 +5,17 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /** One machine row as sent to clients. */
-public record MachineEntry(ResourceLocation dim, BlockPos pos, ResourceLocation block, MachineStatus status,
+public record MachineEntry(Identifier dim, BlockPos pos, Identifier block, MachineStatus status,
                            long energy, long energyMax, long fluid, long fluidMax,
                            int slotsUsed, int slots, boolean pinned) {
 
     public static final Codec<MachineEntry> CODEC = RecordCodecBuilder.create(i -> i.group(
-            ResourceLocation.CODEC.fieldOf("dim").forGetter(MachineEntry::dim),
+            Identifier.CODEC.fieldOf("dim").forGetter(MachineEntry::dim),
             BlockPos.CODEC.fieldOf("pos").forGetter(MachineEntry::pos),
-            ResourceLocation.CODEC.fieldOf("block").forGetter(MachineEntry::block),
+            Identifier.CODEC.fieldOf("block").forGetter(MachineEntry::block),
             Codec.INT.xmap(MachineStatus::byId, MachineStatus::ordinal).fieldOf("status").forGetter(MachineEntry::status),
             Codec.LONG.fieldOf("e").forGetter(MachineEntry::energy),
             Codec.LONG.fieldOf("em").forGetter(MachineEntry::energyMax),
@@ -28,9 +28,9 @@ public record MachineEntry(ResourceLocation dim, BlockPos pos, ResourceLocation 
 
     public static final StreamCodec<FriendlyByteBuf, MachineEntry> STREAM_CODEC = StreamCodec.of(
             (buf, e) -> {
-                buf.writeResourceLocation(e.dim);
+                buf.writeIdentifier(e.dim);
                 buf.writeBlockPos(e.pos);
-                buf.writeResourceLocation(e.block);
+                buf.writeIdentifier(e.block);
                 buf.writeByte(e.status.ordinal());
                 buf.writeVarLong(e.energy);
                 buf.writeVarLong(e.energyMax);
@@ -40,7 +40,7 @@ public record MachineEntry(ResourceLocation dim, BlockPos pos, ResourceLocation 
                 buf.writeVarInt(e.slots);
                 buf.writeBoolean(e.pinned);
             },
-            buf -> new MachineEntry(buf.readResourceLocation(), buf.readBlockPos(), buf.readResourceLocation(),
+            buf -> new MachineEntry(buf.readIdentifier(), buf.readBlockPos(), buf.readIdentifier(),
                     MachineStatus.byId(buf.readByte()), buf.readVarLong(), buf.readVarLong(), buf.readVarLong(),
                     buf.readVarLong(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()));
 

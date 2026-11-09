@@ -22,10 +22,11 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.energy.IEnergyStorage;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -87,7 +88,7 @@ public final class Machines {
         if (level == null) return null;
         BlockPos pos = gp.pos();
         if (!level.isLoaded(pos)) {
-            return new MachineEntry(dim.location(), pos, BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.AIR),
+            return new MachineEntry(dim.identifier(), pos, BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.AIR),
                     MachineStatus.UNLOADED, 0, 0, 0, 0, 0, 0, true);
         }
         BlockEntity be = level.getBlockEntity(pos);
@@ -101,21 +102,21 @@ public final class Machines {
         if (state.is(FORCED)) return true;
         if (be instanceof AbstractFurnaceBlockEntity) return true;
         if (Create.isKinetic(be)) {
-            return cap(level, be, Capabilities.ItemHandler.BLOCK) != null || cap(level, be, Capabilities.FluidHandler.BLOCK) != null;
+            return cap(level, be, Capabilities.Item.BLOCK) != null || cap(level, be, Capabilities.Fluid.BLOCK) != null;
         }
-        IEnergyStorage energy = cap(level, be, Capabilities.EnergyStorage.BLOCK);
-        IItemHandler items = cap(level, be, Capabilities.ItemHandler.BLOCK);
-        IFluidHandler fluids = cap(level, be, Capabilities.FluidHandler.BLOCK);
-        boolean hasEnergy = energy != null && energy.getMaxEnergyStored() > 0;
-        boolean hasItems = items != null && items.getSlots() > 0;
-        boolean hasFluids = fluids != null && fluids.getTanks() > 0;
+        EnergyHandler energy = cap(level, be, Capabilities.Energy.BLOCK);
+        ResourceHandler<ItemResource> items = cap(level, be, Capabilities.Item.BLOCK);
+        ResourceHandler<FluidResource> fluids = cap(level, be, Capabilities.Fluid.BLOCK);
+        boolean hasEnergy = energy != null && energy.getCapacityAsLong() > 0;
+        boolean hasItems = items != null && items.size() > 0;
+        boolean hasFluids = fluids != null && fluids.size() > 0;
         if (hasEnergy && (hasItems || hasFluids)) return true;
         if (activeProperty(state) != null && (hasEnergy || hasItems || hasFluids)) return true;
         if (hasItems && !hasEnergy && !hasFluids) {
-            int slots = items.getSlots();
+            int slots = items.size();
             return slots >= 2 && slots <= Config.MAX_ITEM_ONLY_SLOTS.get();
         }
-        if (hasFluids && hasItems) return items.getSlots() <= Config.MAX_ITEM_ONLY_SLOTS.get();
+        if (hasFluids && hasItems) return items.size() <= Config.MAX_ITEM_ONLY_SLOTS.get();
         return false;
     }
 
@@ -125,37 +126,38 @@ public final class Machines {
         BlockPos pos = be.getBlockPos();
         BlockState state = be.getBlockState();
         long now = level.getGameTime();
-        IEnergyStorage energy = cap(level, be, Capabilities.EnergyStorage.BLOCK);
-        IItemHandler items = cap(level, be, Capabilities.ItemHandler.BLOCK);
-        IFluidHandler fluids = cap(level, be, Capabilities.FluidHandler.BLOCK);
+        EnergyHandler energy = cap(level, be, Capabilities.Energy.BLOCK);
+        ResourceHandler<ItemResource> items = cap(level, be, Capabilities.Item.BLOCK);
+        ResourceHandler<FluidResource> fluids = cap(level, be, Capabilities.Fluid.BLOCK);
 
         long e = 0, em = 0, f = 0, fm = 0;
         int used = 0, slots = 0;
         long sig = 17;
         boolean anyFull = false;
         if (energy != null) {
-            e = energy.getEnergyStored();
-            em = energy.getMaxEnergyStored();
+            e = energy.getAmountAsLong();
+            em = energy.getCapacityAsLong();
             sig = sig * 31 + e;
         }
         if (items != null) {
-            slots = items.getSlots();
+            slots = items.size();
             for (int i = 0; i < slots; i++) {
-                ItemStack s = items.getStackInSlot(i);
-                if (s.isEmpty()) continue;
+                ItemResource r = items.getResource(i);
+                long amt = items.getAmountAsLong(i);
+                if (r.isEmpty() || amt <= 0) continue;
                 used++;
                 sig = sig * 31 + i;
-                sig = sig * 31 + System.identityHashCode(s.getItem());
-                sig = sig * 31 + s.getCount();
-                int limit = Math.min(s.getMaxStackSize(), items.getSlotLimit(i));
-                if (s.getCount() >= limit && !items.extractItem(i, 1, true).isEmpty()) anyFull = true;
+                sig = sig * 31 + System.identityHashCode(r.getItem());
+                sig = sig * 31 + amt;
+                long limit = Math.min(r.getMaxStackSize(), items.getCapacityAsLong(i, r));
+                if (amt >= limit && canExtract(items, i, r)) anyFull = true;
             }
         }
         if (fluids != null) {
-            for (int t = 0; t < fluids.getTanks(); t++) {
-                FluidStack fs = fluids.getFluidInTank(t);
-                int amt = fs.getAmount();
-                int capT = fluids.getTankCapacity(t);
+            for (int t = 0; t < fluids.size(); t++) {
+                FluidResource fr = fluids.getResource(t);
+                long amt = fluids.getAmountAsLong(t);
+                long capT = fluids.getCapacityAsLong(t, fr);
                 f += amt;
                 fm += capT;
                 sig = sig * 31 + amt;
@@ -188,7 +190,7 @@ public final class Machines {
         } else if (Boolean.TRUE.equals(active) || changing) {
             status = MachineStatus.WORKING;
         } else if (be instanceof AbstractFurnaceBlockEntity && items != null && slots >= 2
-                && items.getStackInSlot(1).isEmpty() && !items.getStackInSlot(0).isEmpty()) {
+                && items.getAmountAsLong(1) == 0 && items.getAmountAsLong(0) > 0) {
             status = MachineStatus.NO_POWER; // furnace out of fuel
         } else if (young && active == null) {
             status = MachineStatus.CHECKING;
@@ -197,8 +199,14 @@ public final class Machines {
         } else {
             status = MachineStatus.IDLE;
         }
-        return new MachineEntry(level.dimension().location(), pos, BuiltInRegistries.BLOCK.getKey(state.getBlock()), status,
+        return new MachineEntry(level.dimension().identifier(), pos, BuiltInRegistries.BLOCK.getKey(state.getBlock()), status,
                 e, em, f, fm, used, slots, false);
+    }
+
+    private static boolean canExtract(ResourceHandler<ItemResource> h, int slot, ItemResource r) {
+        try (Transaction tx = Transaction.openRoot()) {
+            return h.extract(slot, r, 1, tx) > 0; // not committed, rolls back
+        }
     }
 
     private static void prune(long now) {
@@ -270,6 +278,6 @@ public final class Machines {
     }
 
     public static ChunkPos chunk(BlockPos p) {
-        return new ChunkPos(p);
+        return ChunkPos.containing(p);
     }
 }
