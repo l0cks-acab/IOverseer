@@ -2,7 +2,7 @@
 
 Watch every machine in your base, from any mod. Made for kitchen-sink packs.
 
-NeoForge 26.1.2 (this branch). 1.21.1 is on `main`. No dependencies.
+NeoForge 1.21.1. No dependencies.
 
 ## What it does
 - **Overseer Tablet**: use it to list every machine within 32 blocks. Each one shows as **Working**, **Idle**, **Output full** or **No power**, grouped by mod.

@@ -26,7 +26,6 @@ import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -36,6 +35,9 @@ import java.util.*;
 public final class Machines {
     public static final TagKey<Block> IGNORED = TagKey.create(Registries.BLOCK, Overseer.id("ignored"));
     public static final TagKey<Block> FORCED = TagKey.create(Registries.BLOCK, Overseer.id("machines"));
+    /** Block id words that mean energy storage or transport, not a machine. Add others to the overseer:ignored tag. */
+    private static final List<String> STORAGE_WORDS = List.of("energy_cell", "energy_cube", "battery", "capacitor", "cable",
+            "conduit", "wire", "accumulator", "induction", "energy_storage", "flux_point", "flux_plug", "flux_controller", "transmitter");
     private static final Set<String> ACTIVE_PROPS = Set.of("lit", "active", "working", "running", "is_active", "on");
 
     private record History(long sig, long lastChange, long firstSeen, long lastSeen) {}
@@ -110,6 +112,7 @@ public final class Machines {
         boolean hasEnergy = energy != null && energy.getCapacityAsLong() > 0;
         boolean hasItems = items != null && items.size() > 0;
         boolean hasFluids = fluids != null && fluids.size() > 0;
+        if (hasEnergy && isEnergyStorage(state)) return false; // batteries, cells, cables
         if (hasEnergy && (hasItems || hasFluids)) return true;
         if (activeProperty(state) != null && (hasEnergy || hasItems || hasFluids)) return true;
         if (hasItems && !hasEnergy && !hasFluids) {
@@ -150,7 +153,7 @@ public final class Machines {
                 sig = sig * 31 + System.identityHashCode(r.getItem());
                 sig = sig * 31 + amt;
                 long limit = Math.min(r.getMaxStackSize(), items.getCapacityAsLong(i, r));
-                if (amt >= limit && canExtract(items, i, r)) anyFull = true;
+                if (amt >= limit) anyFull = true; // some mods hide extraction on the null side, so don't require it
             }
         }
         if (fluids != null) {
@@ -203,12 +206,6 @@ public final class Machines {
                 e, em, f, fm, used, slots, false);
     }
 
-    private static boolean canExtract(ResourceHandler<ItemResource> h, int slot, ItemResource r) {
-        try (Transaction tx = Transaction.openRoot()) {
-            return h.extract(slot, r, 1, tx) > 0; // not committed, rolls back
-        }
-    }
-
     private static void prune(long now) {
         if (now - lastPrune < 1200) return;
         lastPrune = now;
@@ -217,6 +214,12 @@ public final class Machines {
 
     public static void clear() {
         HISTORY.clear();
+    }
+
+    private static boolean isEnergyStorage(BlockState state) {
+        String path = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
+        for (String w : STORAGE_WORDS) if (path.contains(w)) return true;
+        return false;
     }
 
     @Nullable

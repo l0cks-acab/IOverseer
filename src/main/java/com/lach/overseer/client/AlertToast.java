@@ -39,9 +39,10 @@ public class AlertToast implements Toast {
         Theme.outline(g, 0, 0, w, h, Theme.GOLD_DIM);
         Block b = BuiltInRegistries.BLOCK.getValue(entry.block());
         g.item(new ItemStack(b.asItem()), 8, 8);
-        Component title = Component.translatable("overseer.toast." + entry.status().key, b.getName());
-        g.text(font, font.plainSubstrByWidth(title.getString(), w - 34), 30, 7, entry.status().color, false);
+        g.text(font, font.plainSubstrByWidth(b.getName().getString(), w - 34), 30, 7, Theme.AMBER, false);
         BlockPos p = entry.pos();
-        g.text(font, p.getX() + " " + p.getY() + " " + p.getZ(), 30, 18, Theme.AMBER_DIM, false);
+        Component st = Component.translatable("overseer.status." + entry.status().key);
+        g.text(font, st, 30, 18, entry.status().color, false);
+        g.text(font, p.getX() + " " + p.getY() + " " + p.getZ(), 34 + font.width(st), 18, Theme.AMBER_DIM, false);
     }
 }
