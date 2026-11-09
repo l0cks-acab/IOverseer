@@ -1,0 +1,12 @@
+{
+  "values": [
+    "minecraft:chest", "minecraft:trapped_chest", "minecraft:barrel", "minecraft:hopper",
+    "minecraft:dispenser", "minecraft:dropper", "minecraft:crafter", "minecraft:chiseled_bookshelf",
+    "minecraft:decorated_pot", "minecraft:jukebox", "minecraft:lectern", "minecraft:ender_chest",
+    "minecraft:campfire", "minecraft:soul_campfire",
+    "#minecraft:shulker_boxes",
+    { "id": "#c:chests", "required": false },
+    { "id": "#c:barrels", "required": false },
+    { "id": "#c:player_workstations/crafting_tables", "required": false }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "overseer:block/monitor_screen_front",
+    "side": "overseer:block/monitor_casing",
+    "top": "overseer:block/monitor_casing_top"
+  }
+}

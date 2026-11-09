@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": ["III", "PTP", "GRG"],
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "P": { "item": "minecraft:glass_pane" },
+    "T": { "item": "overseer:monitor_tablet" },
+    "G": { "item": "minecraft:gold_ingot" },
+    "R": { "item": "minecraft:redstone_block" }
+  },
+  "result": { "id": "overseer:monitor_screen", "count": 1 }
+}
