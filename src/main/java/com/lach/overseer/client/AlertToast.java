@@ -28,10 +28,11 @@ public class AlertToast implements Toast {
         Block b = BuiltInRegistries.BLOCK.get(entry.block());
         g.renderItem(new ItemStack(b.asItem()), 8, 8);
         var font = tc.getMinecraft().font;
-        Component title = Component.translatable("overseer.toast." + entry.status().key, b.getName());
-        g.drawString(font, font.plainSubstrByWidth(title.getString(), w - 34), 30, 7, entry.status().color, false);
+        g.drawString(font, font.plainSubstrByWidth(b.getName().getString(), w - 34), 30, 7, Theme.AMBER, false);
         BlockPos p = entry.pos();
-        g.drawString(font, p.getX() + " " + p.getY() + " " + p.getZ(), 30, 18, Theme.AMBER_DIM, false);
+        Component st = Component.translatable("overseer.status." + entry.status().key);
+        g.drawString(font, st, 30, 18, entry.status().color, false);
+        g.drawString(font, p.getX() + " " + p.getY() + " " + p.getZ(), 34 + font.width(st), 18, Theme.AMBER_DIM, false);
         return time >= 6000L ? Visibility.HIDE : Visibility.SHOW;
     }
 }

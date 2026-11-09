@@ -7,6 +7,17 @@
     "#minecraft:shulker_boxes",
     { "id": "#c:chests", "required": false },
     { "id": "#c:barrels", "required": false },
-    { "id": "#c:player_workstations/crafting_tables", "required": false }
+    { "id": "#c:player_workstations/crafting_tables", "required": false },
+    { "id": "ae2:drive", "required": false },
+    { "id": "ae2:chest", "required": false },
+    { "id": "ae2:interface", "required": false },
+    { "id": "ae2:pattern_provider", "required": false },
+    { "id": "ae2:controller", "required": false },
+    { "id": "ae2:energy_acceptor", "required": false },
+    { "id": "ae2:cable_bus", "required": false },
+    { "id": "ae2:energy_cell", "required": false },
+    { "id": "ae2:dense_energy_cell", "required": false },
+    { "id": "ae2:creative_energy_cell", "required": false },
+    { "id": "ae2:molecular_assembler", "required": false }
   ]
 }

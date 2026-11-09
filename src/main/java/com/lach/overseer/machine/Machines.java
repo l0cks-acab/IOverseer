@@ -35,6 +35,9 @@ import java.util.*;
 public final class Machines {
     public static final TagKey<Block> IGNORED = TagKey.create(Registries.BLOCK, Overseer.id("ignored"));
     public static final TagKey<Block> FORCED = TagKey.create(Registries.BLOCK, Overseer.id("machines"));
+    /** Block id words that mean energy storage or transport, not a machine. Add others to the overseer:ignored tag. */
+    private static final List<String> STORAGE_WORDS = List.of("energy_cell", "energy_cube", "battery", "capacitor", "cable",
+            "conduit", "wire", "accumulator", "induction", "energy_storage", "flux_point", "flux_plug", "flux_controller", "transmitter");
     private static final Set<String> ACTIVE_PROPS = Set.of("lit", "active", "working", "running", "is_active", "on");
 
     private record History(long sig, long lastChange, long firstSeen, long lastSeen) {}
@@ -109,6 +112,7 @@ public final class Machines {
         boolean hasEnergy = energy != null && energy.getMaxEnergyStored() > 0;
         boolean hasItems = items != null && items.getSlots() > 0;
         boolean hasFluids = fluids != null && fluids.getTanks() > 0;
+        if (hasEnergy && isEnergyStorage(state)) return false; // batteries, cells, cables
         if (hasEnergy && (hasItems || hasFluids)) return true;
         if (activeProperty(state) != null && (hasEnergy || hasItems || hasFluids)) return true;
         if (hasItems && !hasEnergy && !hasFluids) {
@@ -148,7 +152,7 @@ public final class Machines {
                 sig = sig * 31 + System.identityHashCode(s.getItem());
                 sig = sig * 31 + s.getCount();
                 int limit = Math.min(s.getMaxStackSize(), items.getSlotLimit(i));
-                if (s.getCount() >= limit && !items.extractItem(i, 1, true).isEmpty()) anyFull = true;
+                if (s.getCount() >= limit) anyFull = true; // some mods hide extraction on the null side, so don't require it
             }
         }
         if (fluids != null) {
@@ -209,6 +213,12 @@ public final class Machines {
 
     public static void clear() {
         HISTORY.clear();
+    }
+
+    private static boolean isEnergyStorage(BlockState state) {
+        String path = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
+        for (String w : STORAGE_WORDS) if (path.contains(w)) return true;
+        return false;
     }
 
     @Nullable
