@@ -1,0 +1,23 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": ["gui", "ground", "fixed"],
+        "model": { "type": "minecraft:model", "model": "ioverseer:item/monitor_tablet" }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:composite",
+      "models": [
+        { "type": "minecraft:model", "model": "ioverseer:item/monitor_tablet" },
+        {
+          "type": "minecraft:special",
+          "base": "ioverseer:item/monitor_tablet",
+          "model": { "type": "ioverseer:tablet_preview" }
+        }
+      ]
+    }
+  }
+}

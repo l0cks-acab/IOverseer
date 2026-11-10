@@ -15,7 +15,7 @@ GOLD, GOLD_HI, GOLD_DIM = (232, 178, 58), (255, 216, 119), (140, 100, 24)
 STEEL, STEEL_DARK = (43, 46, 52), (27, 29, 33)
 IO = (62, 200, 224)
 STATUS = [(70, 196, 106), (242, 210, 75), (245, 158, 46), (229, 72, 77)]
-TABLET = os.path.join(os.path.dirname(__file__), '..', 'src/main/resources/assets/overseer/textures/item/monitor_tablet.png')
+TABLET = os.path.join(os.path.dirname(__file__), '..', 'src/main/resources/assets/ioverseer/textures/item/monitor_tablet.png')
 
 
 def shot(name):
@@ -149,7 +149,7 @@ def banner(ic):
 # ---------- gallery ----------
 def gallery():
     pages = [
-        ('01-overseer.png', 'hero.png', 'I/OVERSEER', ['Every machine in your base,', 'from any mod, at a glance.'], (0, 60, 1280, 720), 660),
+        ('01-ioverseer.png', 'hero.png', 'I/OVERSEER', ['Every machine in your base,', 'from any mod, at a glance.'], (0, 60, 1280, 720), 660),
         ('02-details.png', 'e1.png', 'Details', ['Working, idle, full or no power.', 'Energy, fluids, slots, position.', 'Pin machines to watch anywhere.'], (128, 38, 1152, 682), 640),
         ('03-find-it.png', 'e3.png', 'Find it', ['Ctrl-click a machine: gold outline', 'through walls, a beam and a HUD', 'arrow with the distance.'], (240, 0, 1120, 600), 680),
         ('04-live-preview.png', 'h2.png', 'Live preview', ['Hold the tablet to see the power', 'draw of nearby machines, stored', 'energy and the status mix.'], (760, 260, 1280, 720), 480),
