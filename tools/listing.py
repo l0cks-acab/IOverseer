@@ -137,12 +137,12 @@ def banner(ic):
 # ---------- gallery ----------
 def gallery():
     pages = [
-        ('01-overseer.png', 'm11.png', 'OVERSEER', ['Every machine nearby, from any mod,', 'grouped and colour-coded.'], (128, 38, 1152, 682), 640),
-        ('02-details.png', 'e1.png', 'Details & pins', ['Energy, fluids, slots and position.', 'Pin a machine to watch it from', 'any distance or dimension.'], (128, 38, 1152, 682), 680),
-        ('03-find-it.png', 'e3.png', 'Find it', ['Ctrl-click a machine: gold outline', 'through walls, a beam and a HUD', 'arrow with the distance.'], (300, 0, 1060, 470), 680),
-        ('04-live-preview.png', 'h2.png', 'Live preview', ['Hold the tablet to see the power', 'draw of nearby machines, stored', 'energy and the status mix.'], (640, 220, 1280, 720), 560),
+        ('01-overseer.png', 'hero.png', 'OVERSEER', ['Every machine in your base,', 'from any mod, at a glance.'], (0, 60, 1280, 720), 700),
+        ('02-details.png', 'e1.png', 'Details', ['Working, idle, full or no power.', 'Energy, fluids, slots, position.', 'Pin machines to watch anywhere.'], (128, 38, 1152, 682), 640),
+        ('03-find-it.png', 'e3.png', 'Find it', ['Ctrl-click a machine: gold outline', 'through walls, a beam and a HUD', 'arrow with the distance.'], (240, 0, 1120, 600), 680),
+        ('04-live-preview.png', 'h2.png', 'Live preview', ['Hold the tablet to see the power', 'draw of nearby machines, stored', 'energy and the status mix.'], (760, 260, 1280, 720), 480),
         ('05-alerts.png', 'alert.png', 'Alerts', ['A toast when a pinned machine', 'runs out of power or fills up.'], (560, 0, 1280, 420), 680),
-        ('06-screen.png', 'scr.png', 'Overseer Screen', ['A wall monitor with a live', 'status list on its face.'], (330, 120, 950, 640), 560),
+        ('06-screen.png', 'scr.png', 'Overseer Screen', ['A wall monitor with a live', 'status list on its face.'], (330, 0, 900, 420), 600),
         ('07-mod-resources.png', 'p6.png', 'Mod resources', ['Mekanism chemicals and', 'Ars Nouveau Source,', 'next to FE and fluids.'], (780, 90, 1150, 690), 360),
     ]
     for name, src, title, lines, crop, ww in pages:
