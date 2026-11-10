@@ -99,25 +99,18 @@ def tablet_art(px):
 def icon():
     S = 1024
     c = Image.new('RGBA', (S, S), (0, 0, 0, 0))
-    d = ImageDraw.Draw(c)
-    d.rounded_rectangle([40, 40, S - 40, S - 40], 150, fill=STEEL_DARK + (255,))
-    d.rounded_rectangle([64, 64, S - 64, S - 64], 130, fill=STEEL + (255,))
-    d.rounded_rectangle([64, 64, S - 64, S - 64], 130, outline=GOLD_DIM + (255,), width=10)
-    # circuit traces
-    for y, x1 in [(250, 230), (520, 180), (790, 240)]:
-        d.line([110, y, x1, y], fill=GOLD_DIM + (255,), width=8)
-        d.ellipse([x1 - 12, y - 12, x1 + 12, y + 12], fill=GOLD + (255,))
-        d.line([S - 110, y + 40, S - x1, y + 40], fill=GOLD_DIM + (255,), width=8)
-        d.ellipse([S - x1 - 12, y + 28, S - x1 + 12, y + 52], fill=GOLD + (255,))
-    glow = Image.new('RGBA', (S, S), (0, 0, 0, 0))
-    ImageDraw.Draw(glow).rounded_rectangle([250, 170, S - 250, S - 170], 40, fill=GOLD + (150,))
-    c.alpha_composite(glow.filter(ImageFilter.GaussianBlur(60)))
-    t = tablet_art(52)
-    t = t.crop((2 * 52, 1 * 52, 14 * 52, 15 * 52))
-    c.alpha_composite(t, ((S - t.width) // 2, (S - t.height) // 2))
-    for x, y in [(110, 110), (S - 140, 110), (110, S - 140), (S - 140, S - 140)]:
-        d.rectangle([x, y, x + 30, y + 30], fill=GOLD + (255,))
-        d.rectangle([x + 4, y + 4, x + 14, y + 14], fill=GOLD_HI + (255,))
+    px = 42
+    t = tablet_art(px).crop((2 * px, 1 * px, 14 * px, 15 * px))
+    x, y = (S - t.width) // 2, (S - t.height) // 2
+    # gold glow from the tablet's own silhouette (blur the mask, not the colour, so the edge stays gold)
+    mask = Image.new('L', (S, S), 0)
+    mask.paste(t.split()[3], (x, y))
+    for r, k, col in [(120, 1.6, GOLD), (60, 1.8, GOLD), (22, 1.6, GOLD_HI)]:
+        a = mask.filter(ImageFilter.GaussianBlur(r)).point(lambda v, k=k: min(255, int(v * k)))
+        layer = Image.new('RGBA', (S, S), col + (0,))
+        layer.putalpha(a)
+        c.alpha_composite(layer)
+    c.alpha_composite(t, (x, y))
     c.save(os.path.join(OUT, 'icon-1024.png'))
     Image.frombytes('RGBA', c.size, c.tobytes()).resize((400, 400), Image.LANCZOS).save(os.path.join(OUT, 'icon.png'))
     return c
