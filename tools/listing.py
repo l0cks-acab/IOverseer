@@ -105,11 +105,16 @@ def icon():
     # gold glow from the tablet's own silhouette (blur the mask, not the colour, so the edge stays gold)
     mask = Image.new('L', (S, S), 0)
     mask.paste(t.split()[3], (x, y))
-    for r, k, col in [(120, 1.6, GOLD), (60, 1.8, GOLD), (22, 1.6, GOLD_HI)]:
+    for r, k, col in [(90, 1.7, GOLD), (45, 1.8, GOLD), (18, 1.6, GOLD_HI)]:
         a = mask.filter(ImageFilter.GaussianBlur(r)).point(lambda v, k=k: min(255, int(v * k)))
         layer = Image.new('RGBA', (S, S), col + (0,))
         layer.putalpha(a)
         c.alpha_composite(layer)
+    # fade to nothing before the canvas edge so no box shows
+    edge = Image.new('L', (S, S), 0)
+    ImageDraw.Draw(edge).ellipse([60, 60, S - 60, S - 60], fill=255)
+    edge = edge.filter(ImageFilter.GaussianBlur(50))
+    c.putalpha(Image.composite(c.split()[3], Image.new('L', (S, S), 0), edge))
     c.alpha_composite(t, (x, y))
     c.save(os.path.join(OUT, 'icon-1024.png'))
     Image.frombytes('RGBA', c.size, c.tobytes()).resize((400, 400), Image.LANCZOS).save(os.path.join(OUT, 'icon.png'))
