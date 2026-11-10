@@ -43,7 +43,8 @@ public class MonitorScreenRenderer implements BlockEntityRenderer<MonitorScreenB
         int x0 = -half, y = -half;
 
         List<MachineEntry> list = be.entries();
-        text(m, buf, "OVERSEER", x0, y, Theme.GOLD);
+        text(m, buf, "I/O", x0, y, Theme.IO);
+        text(m, buf, "VERSEER", x0 + font.width("I/O"), y, Theme.GOLD);
         Map<MachineStatus, Integer> counts = new EnumMap<>(MachineStatus.class);
         for (MachineEntry e : list) counts.merge(e.status(), 1, Integer::sum);
         String total = Integer.toString(list.size());
