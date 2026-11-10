@@ -199,6 +199,10 @@ public class OverseerScreen extends Screen {
 
         // footer
         g.drawString(font, Component.translatable("overseer.gui.hint"), x + 12, y + H - 15, Theme.AMBER_DIM, false);
+        if (source.isEmpty()) {
+            boolean on = TabletPreview.enabled(minecraft.player);
+            drawBtn(g, x + DX + 5, y + H - 18, DW - 10, Component.translatable(on ? "overseer.gui.preview_on" : "overseer.gui.preview_off"), on, mx, my);
+        }
 
         if (hoverRow != null && hasControlDown()) {
             g.renderTooltip(font, Component.translatable(Highlights.has(key(hoverRow.entry)) ? "overseer.gui.unhighlight" : "overseer.gui.highlight"), mx, my);
@@ -255,7 +259,18 @@ public class OverseerScreen extends Screen {
             Theme.bar(g, x + 5, yy + 9, DW - 10, 5, e.fluid() / (float) e.fluidMax(), 0xFF3E8FE0);
             yy += 17;
         }
-        if (e.hasItems()) {
+        int gaugeBottom = y + DH - 34;
+        for (com.lach.overseer.machine.Gauge ga : e.gauges()) {
+            if (yy + 15 > gaugeBottom) break;
+            String amt = compact(ga.amount()) + "/" + compact(ga.max());
+            int aw = font.width(amt);
+            String label = font.plainSubstrByWidth(Component.translatable(ga.label()).getString(), DW - 14 - aw);
+            g.drawString(font, label, x + 5, yy, Theme.TEXT, false);
+            g.drawString(font, amt, x + DW - 5 - aw, yy, Theme.AMBER_DIM, false);
+            Theme.bar(g, x + 5, yy + 9, DW - 10, 5, ga.amount() / (float) ga.max(), ga.color());
+            yy += 17;
+        }
+        if (e.hasItems() && yy + 9 <= gaugeBottom) {
             g.drawString(font, Component.translatable("overseer.gui.slots", e.slotsUsed(), e.slots()), x + 5, yy, Theme.TEXT, false);
         }
         // buttons
@@ -269,6 +284,18 @@ public class OverseerScreen extends Screen {
         boolean hover = mx >= x && mx < x + w && my >= y && my < y + 13;
         Theme.button(g, x, y, w, 13, active, hover);
         g.drawCenteredString(font, label, x + w / 2, y + 3, active ? Theme.GOLD_HI : Theme.TEXT);
+    }
+
+    /** Short number for tight spots: 1200 -> 1.2k, 10000 -> 10k. */
+    private static String compact(long v) {
+        String[] u = {"", "k", "M", "G", "T"};
+        double d = v;
+        int i = 0;
+        while (d >= 1000 && i < u.length - 1) { d /= 1000; i++; }
+        if (i == 0) return Long.toString(v);
+        String s = d >= 10 ? Long.toString(Math.round(d)) : String.format(Locale.ROOT, "%.1f", d);
+        if (s.endsWith(".0")) s = s.substring(0, s.length() - 2);
+        return s + u[i];
     }
 
     private static String fmt(long v) {
@@ -306,6 +333,11 @@ public class OverseerScreen extends Screen {
                 }
                 ry += rh;
             }
+        }
+        if (source.isEmpty() && mx >= x + DX + 5 && mx < x + DX + DW - 5 && my >= y + H - 18 && my < y + H - 5) {
+            TabletPreview.toggle(minecraft.player);
+            click();
+            return true;
         }
         MachineEntry e = selectedEntry();
         if (e != null) {

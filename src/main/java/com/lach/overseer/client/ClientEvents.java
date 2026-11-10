@@ -39,6 +39,24 @@ public final class ClientEvents {
         }
 
         @SubscribeEvent
+        public static void models(ModelEvent.RegisterAdditional e) {
+            e.register(TabletRenderer.BASE);
+        }
+
+        @SubscribeEvent
+        public static void extensions(net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent e) {
+            e.registerItem(new net.neoforged.neoforge.client.extensions.common.IClientItemExtensions() {
+                private TabletRenderer renderer;
+
+                @Override
+                public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                    if (renderer == null) renderer = new TabletRenderer();
+                    return renderer;
+                }
+            }, Registry.TABLET.get());
+        }
+
+        @SubscribeEvent
         public static void layers(RegisterGuiLayersEvent e) {
             e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Overseer.id("highlights"), ClientEvents::hud);
         }

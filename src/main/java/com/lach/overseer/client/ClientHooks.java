@@ -21,6 +21,10 @@ public final class ClientHooks {
         if (Minecraft.getInstance().screen instanceof OverseerScreen os) os.accept(s);
     }
 
+    public static void preview(Net.Preview p) {
+        TabletPreview.accept(p);
+    }
+
     public static void alert(Net.Alert a) {
         Minecraft mc = Minecraft.getInstance();
         mc.getToasts().addToast(new AlertToast(a.entry()));
