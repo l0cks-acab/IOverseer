@@ -1,4 +1,4 @@
-"""Overseer CurseForge / README art: icon, banner and captioned gallery images.
+"""I/Overseer CurseForge / README art: icon, banner and captioned gallery images.
 python3 tools/listing.py <shots_dir> <out_dir>"""
 import os
 import sys
@@ -13,6 +13,7 @@ SMALL = lambda s: ImageFont.truetype(FD + 'Outfit-Regular.ttf', s)
 W, H = 1280, 720
 GOLD, GOLD_HI, GOLD_DIM = (232, 178, 58), (255, 216, 119), (140, 100, 24)
 STEEL, STEEL_DARK = (43, 46, 52), (27, 29, 33)
+IO = (62, 200, 224)
 STATUS = [(70, 196, 106), (242, 210, 75), (245, 158, 46), (229, 72, 77)]
 TABLET = os.path.join(os.path.dirname(__file__), '..', 'src/main/resources/assets/overseer/textures/item/monitor_tablet.png')
 
@@ -71,8 +72,19 @@ def trace(canvas, x0, x1, y):
     d.rectangle([x1 - 3, y - 3, x1 + 3, y + 3], fill=GOLD + (255,))
 
 
+def brand_text(canvas, xy, font, radius=16, strength=190):
+    """I/OVERSEER with the I/O in input/output cyan."""
+    x, y = xy
+    glow_text(canvas, (x, y), 'I/O', font, fill=IO, glow=IO, radius=radius, strength=strength)
+    w = ImageDraw.Draw(canvas).textlength('I/O', font=font)
+    glow_text(canvas, (x + w, y), 'VERSEER', font, glow=GOLD, radius=radius, strength=strength)
+
+
 def text_block(canvas, x, y, title, lines, tsize=64):
-    glow_text(canvas, (x, y), title, TITLE(tsize), glow=GOLD, radius=14, strength=160)
+    if title == 'I/OVERSEER':
+        brand_text(canvas, (x, y), TITLE(tsize), radius=14, strength=160)
+    else:
+        glow_text(canvas, (x, y), title, TITLE(tsize), glow=GOLD, radius=14, strength=160)
     y += tsize + 26
     trace(canvas, x, x + 300, y)
     y += 24
@@ -127,7 +139,7 @@ def banner(ic):
     c = bg(shot('m9.png').resize((BW, BH * 2)).crop((0, BH // 2, BW, BH + BH // 2)))
     c = c.resize((BW, BH))
     c.alpha_composite(ic.resize((300, 300), Image.LANCZOS), (70, 50))
-    glow_text(c, (420, 80), 'OVERSEER', TITLE(130), glow=GOLD, radius=22, strength=200)
+    brand_text(c, (420, 80), TITLE(130), radius=22, strength=200)
     trace(c, 424, 1000, 248)
     ImageDraw.Draw(c).text((424, 272), 'Watch every machine in your base, from any mod.', font=BODY(38), fill=(233, 226, 208, 255))
     chips(c, 426, 340)
@@ -137,18 +149,18 @@ def banner(ic):
 # ---------- gallery ----------
 def gallery():
     pages = [
-        ('01-overseer.png', 'hero.png', 'OVERSEER', ['Every machine in your base,', 'from any mod, at a glance.'], (0, 60, 1280, 720), 700),
+        ('01-overseer.png', 'hero.png', 'I/OVERSEER', ['Every machine in your base,', 'from any mod, at a glance.'], (0, 60, 1280, 720), 660),
         ('02-details.png', 'e1.png', 'Details', ['Working, idle, full or no power.', 'Energy, fluids, slots, position.', 'Pin machines to watch anywhere.'], (128, 38, 1152, 682), 640),
         ('03-find-it.png', 'e3.png', 'Find it', ['Ctrl-click a machine: gold outline', 'through walls, a beam and a HUD', 'arrow with the distance.'], (240, 0, 1120, 600), 680),
         ('04-live-preview.png', 'h2.png', 'Live preview', ['Hold the tablet to see the power', 'draw of nearby machines, stored', 'energy and the status mix.'], (760, 260, 1280, 720), 480),
         ('05-alerts.png', 'alert.png', 'Alerts', ['A toast when a pinned machine', 'runs out of power or fills up.'], (560, 0, 1280, 420), 680),
-        ('06-screen.png', 'scr.png', 'Overseer Screen', ['A wall monitor with a live', 'status list on its face.'], (330, 0, 900, 420), 600),
+        ('06-screen.png', 'scr.png', 'Wall Screen', ['A wall monitor with a live', 'status list on its face.'], (330, 0, 900, 420), 600),
         ('07-mod-resources.png', 'p6.png', 'Mod resources', ['Mekanism chemicals and', 'Ars Nouveau Source,', 'next to FE and fluids.'], (780, 90, 1150, 690), 360),
     ]
     for name, src, title, lines, crop, ww in pages:
         img = shot(src)
         c = bg(img)
-        y = text_block(c, 70, 200 if len(lines) < 3 else 180, title, lines, 72 if name.startswith('01') else 60)
+        y = text_block(c, 70, 200 if len(lines) < 3 else 180, title, lines, 64 if name.startswith('01') else 60)
         if name.startswith('01'):
             chips(c, 72, y + 16)
         win = window(img, ww, crop)

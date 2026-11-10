@@ -57,7 +57,8 @@ public class MonitorScreenRenderer implements BlockEntityRenderer<MonitorScreenB
         int half = PX / 2;
         int x0 = -half, y = -half;
         List<MachineEntry> list = be.entries();
-        out.add(new Line("OVERSEER", x0, y, Theme.GOLD));
+        out.add(new Line("I/O", x0, y, Theme.IO));
+        out.add(new Line("VERSEER", x0 + font.width("I/O"), y, Theme.GOLD));
         String total = Integer.toString(list.size());
         out.add(new Line(total, half - font.width(total), y, Theme.AMBER_DIM));
         y += 11;

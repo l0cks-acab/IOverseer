@@ -45,7 +45,7 @@ public class OverseerScreen extends Screen {
     private record Row(String header, MachineEntry entry) {}
 
     public OverseerScreen(Optional<BlockPos> source) {
-        super(Component.translatable("overseer.gui.title"));
+        super(Theme.brand());
         this.source = source;
     }
 

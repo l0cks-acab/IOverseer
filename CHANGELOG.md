@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1
+- Renamed to I/Overseer (another mod already uses the name Overseer). The I/O in the name is shown in cyan for Input/Output.
+
 ## 0.2.0
 - Live preview on the held tablet: power draw (FE/t) with a scrolling graph, stored energy bar and status mix. Toggle with the new Preview button in the tablet screen (saved on the tablet).
 - Details panel shows Ars Nouveau Source and Mekanism chemical tanks (gases, infuse types, pigments, slurries).

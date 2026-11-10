@@ -15,6 +15,14 @@ public final class Theme {
     public static final int AMBER = 0xFFFFC24A;
     public static final int AMBER_DIM = 0xFFA77A26;
     public static final int TEXT = 0xFFE9E2D0;
+    /** The I/O in the I/Overseer name: input/output cyan. */
+    public static final int IO = 0xFF3EC8E0;
+
+    /** "I/OVERSEER" with the I/O picked out. */
+    public static net.minecraft.network.chat.Component brand() {
+        return net.minecraft.network.chat.Component.literal("I/O").withColor(IO & 0xFFFFFF)
+                .append(net.minecraft.network.chat.Component.literal("VERSEER").withColor(GOLD & 0xFFFFFF));
+    }
 
     private Theme() {}
 

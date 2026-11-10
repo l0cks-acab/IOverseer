@@ -1,18 +1,18 @@
-# Overseer
+# I/Overseer
 
-![Overseer](docs/banner.png)
+![I/Overseer](docs/banner.png)
 
 Watch every machine in your base, from any mod. Made for kitchen-sink packs.
 
 NeoForge 26.1.2 (this branch). 1.21.1 is on `main`. No dependencies.
 
 ## What it does
-- **Overseer Tablet**: use it to list every machine within 32 blocks. Each one shows as **Working**, **Idle**, **Output full** or **No power**, grouped by mod.
+- **I/Overseer Tablet**: use it to list every machine within 32 blocks. Each one shows as **Working**, **Idle**, **Output full** or **No power**, grouped by mod.
 - **Click** a machine to see its details: energy, fluid, slots, position, plus Ars Nouveau Source and Mekanism chemicals when those mods are installed.
 - **Live preview**: while you hold the tablet its screen shows the power draw of nearby machines (FE/t with a 16-second graph), stored energy and the status mix. Toggle it with the Preview button in the tablet screen.
 - **Ctrl-click** a machine to highlight it in the world: a gold outline that shows through walls, a light beam, and a HUD arrow with the distance. It clears when you reach the machine or ctrl-click it again.
 - **Sneak-use** a machine with the tablet to pin it. Pinned machines show up from any distance and in any dimension. You get a toast when a pinned machine runs out of power or fills its output.
-- **Overseer Screen**: a wall monitor that shows a live status list on its face. Right-click it for the full view.
+- **I/Overseer Screen**: a wall monitor that shows a live status list on its face. Right-click it for the full view.
 
 ![Tablet list](docs/tablet.png)
 
@@ -22,15 +22,15 @@ NeoForge 26.1.2 (this branch). 1.21.1 is on `main`. No dependencies.
 | --- | --- |
 | ![Highlight through walls](docs/highlight.png) | ![Live preview on the held tablet](docs/live-preview.png) |
 
-| Pin alert | Overseer Screen |
+| Pin alert | I/Overseer Screen |
 | --- | --- |
-| ![Alert toast](docs/alert.png) | ![Overseer Screen](docs/screen.png) |
+| ![Alert toast](docs/alert.png) | ![I/Overseer Screen](docs/screen.png) |
 
 ![Mekanism chemicals in the details panel](docs/mod-resources.png)
 
 ## Recipes
-- **Overseer Tablet**: iron / glass pane / iron, redstone / comparator / redstone, iron / gold ingot / iron.
-- **Overseer Screen**: 3 iron on top, glass pane / Overseer Tablet / glass pane, gold ingot / redstone block / gold ingot.
+- **I/Overseer Tablet**: iron / glass pane / iron, redstone / comparator / redstone, iron / gold ingot / iron.
+- **I/Overseer Screen**: 3 iron on top, glass pane / I/Overseer Tablet / glass pane, gold ingot / redstone block / gold ingot.
 
 ## How it reads machines
 It works from the standard NeoForge energy, item and fluid capabilities, so it needs no per-mod code:

@@ -1,11 +1,11 @@
 {
-  "itemGroup.overseer": "Overseer",
-  "item.overseer.monitor_tablet": "Overseer Tablet",
+  "itemGroup.overseer": "I/Overseer",
+  "item.overseer.monitor_tablet": "I/Overseer Tablet",
   "item.overseer.monitor_tablet.tip1": "Use: see every machine nearby",
   "item.overseer.monitor_tablet.tip2": "Sneak-use on a machine: pin it",
   "item.overseer.monitor_tablet.pins": "%s pinned",
-  "block.overseer.monitor_screen": "Overseer Screen",
-  "overseer.gui.title": "OVERSEER",
+  "block.overseer.monitor_screen": "I/Overseer Screen",
+  "overseer.gui.title": "I/OVERSEER",
   "overseer.gui.source_tablet": "Tablet  r%s",
   "overseer.gui.source_screen": "Screen  r%s",
   "overseer.gui.scanning": "Scanning...",
@@ -36,6 +36,6 @@
   "overseer.toast.output_full": "%s: output full",
   "overseer.msg.pinned": "Machine pinned",
   "overseer.msg.unpinned": "Machine unpinned",
-  "overseer.msg.not_machine": "Not a machine Overseer can read",
-  "overseer.msg.need_tablet": "You need an Overseer Tablet to pin machines"
+  "overseer.msg.not_machine": "Not a machine I/Overseer can read",
+  "overseer.msg.need_tablet": "You need an I/Overseer Tablet to pin machines"
 }
