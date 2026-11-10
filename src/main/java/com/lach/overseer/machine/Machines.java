@@ -37,7 +37,8 @@ public final class Machines {
     public static final TagKey<Block> FORCED = TagKey.create(Registries.BLOCK, Overseer.id("machines"));
     /** Block id words that mean energy storage or transport, not a machine. Add others to the overseer:ignored tag. */
     private static final List<String> STORAGE_WORDS = List.of("energy_cell", "energy_cube", "battery", "capacitor", "cable",
-            "conduit", "wire", "accumulator", "induction", "energy_storage", "flux_point", "flux_plug", "flux_controller", "transmitter");
+            "conduit", "wire", "accumulator", "induction", "energy_storage", "flux_point", "flux_plug", "flux_controller", "transmitter",
+            "chemical_tank", "fluid_tank", "source_jar", "relay");
     private static final Set<String> ACTIVE_PROPS = Set.of("lit", "active", "working", "running", "is_active", "on");
 
     private record History(long sig, long lastChange, long firstSeen, long lastSeen) {}
@@ -91,7 +92,7 @@ public final class Machines {
         BlockPos pos = gp.pos();
         if (!level.isLoaded(pos)) {
             return new MachineEntry(dim.identifier(), pos, BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.AIR),
-                    MachineStatus.UNLOADED, 0, 0, 0, 0, 0, 0, true);
+                    MachineStatus.UNLOADED, 0, 0, 0, 0, 0, 0, true, List.of());
         }
         BlockEntity be = level.getBlockEntity(pos);
         if (be == null) return null;
@@ -112,7 +113,8 @@ public final class Machines {
         boolean hasEnergy = energy != null && energy.getCapacityAsLong() > 0;
         boolean hasItems = items != null && items.size() > 0;
         boolean hasFluids = fluids != null && fluids.size() > 0;
-        if (hasEnergy && isEnergyStorage(state)) return false; // batteries, cells, cables
+        if (isEnergyStorage(state)) return false; // batteries, cells, cables, tanks, jars
+        if (Ars.isSourceTile(be) && hasItems) return true;
         if (hasEnergy && (hasItems || hasFluids)) return true;
         if (activeProperty(state) != null && (hasEnergy || hasItems || hasFluids)) return true;
         if (hasItems && !hasEnergy && !hasFluids) {
@@ -167,6 +169,16 @@ public final class Machines {
                 if (capT > 0 && amt >= capT) anyFull = true;
             }
         }
+        List<Gauge> gauges = new ArrayList<>(Ars.gauges(be));
+        gauges.addAll(MekChemicals.gauges(be));
+        if (gauges.size() > 4) gauges = new ArrayList<>(gauges.subList(0, 4));
+        long gaugeMax = 0, gaugeAmt = 0;
+        for (Gauge g : gauges) {
+            sig = sig * 31 + g.amount();
+            gaugeMax += g.max();
+            gaugeAmt += g.amount();
+        }
+        boolean sourceOnly = em == 0 && !gauges.isEmpty() && "source".equals(gauges.get(0).unit());
         Boolean active = null;
         BooleanProperty prop = activeProperty(state);
         if (prop != null) active = state.getValue(prop);
@@ -190,6 +202,8 @@ public final class Machines {
             status = MachineStatus.NO_POWER;
         } else if (em > 0 && e == 0) {
             status = MachineStatus.NO_POWER;
+        } else if (sourceOnly && gauges.get(0).max() > 0 && gauges.get(0).amount() == 0 && !changing) {
+            status = MachineStatus.NO_POWER; // Ars machine with no Source
         } else if (Boolean.TRUE.equals(active) || changing) {
             status = MachineStatus.WORKING;
         } else if (be instanceof AbstractFurnaceBlockEntity && items != null && slots >= 2
@@ -203,7 +217,7 @@ public final class Machines {
             status = MachineStatus.IDLE;
         }
         return new MachineEntry(level.dimension().identifier(), pos, BuiltInRegistries.BLOCK.getKey(state.getBlock()), status,
-                e, em, f, fm, used, slots, false);
+                e, em, f, fm, used, slots, false, gauges);
     }
 
     private static void prune(long now) {
@@ -274,6 +288,158 @@ public final class Machines {
             if (!isKinetic(be)) return null;
             try {
                 return new Info((float) getSpeed.invoke(be), (boolean) isOverStressed.invoke(be));
+            } catch (Throwable t) {
+                return null;
+            }
+        }
+    }
+
+    // ---------- mod resources ----------
+
+    /** Ars Nouveau Source via its ISourceTile interface, by reflection. */
+    static final class Ars {
+        private static boolean tried;
+        private static Class<?> tile;
+        private static Method get, max;
+
+        private static void init() {
+            if (tried) return;
+            tried = true;
+            try {
+                tile = Class.forName("com.hollingsworth.arsnouveau.api.source.ISourceTile");
+                get = tile.getMethod("getSource");
+                max = tile.getMethod("getMaxSource");
+            } catch (Throwable t) {
+                tile = null;
+            }
+        }
+
+        static boolean isSourceTile(BlockEntity be) {
+            init();
+            return tile != null && tile.isInstance(be);
+        }
+
+        static List<Gauge> gauges(BlockEntity be) {
+            if (!isSourceTile(be)) return List.of();
+            try {
+                int m = (int) max.invoke(be);
+                if (m <= 0) return List.of();
+                return List.of(new Gauge("overseer.gauge.source", (int) get.invoke(be), m, 0xFFB45CE6, "source"));
+            } catch (Throwable t) {
+                return List.of();
+            }
+        }
+    }
+
+    /** Mekanism chemical tanks (gases, infuse types, pigments, slurries) via IMekanismChemicalHandler, by reflection. */
+    static final class MekChemicals {
+        private static boolean tried;
+        private static Class<?> handler;
+        private static Method tanks;
+
+        private static void init() {
+            if (tried) return;
+            tried = true;
+            try {
+                handler = Class.forName("mekanism.api.chemical.IMekanismChemicalHandler");
+                tanks = handler.getMethod("getChemicalTanks", Direction.class);
+            } catch (Throwable t) {
+                handler = null;
+            }
+        }
+
+        static List<Gauge> gauges(BlockEntity be) {
+            init();
+            if (handler == null || !handler.isInstance(be)) return List.of();
+            try {
+                List<Gauge> out = new ArrayList<>();
+                for (Object tank : (List<?>) tanks.invoke(be, (Object) null)) {
+                    Class<?> tc = tank.getClass();
+                    long cap = ((Number) tc.getMethod("getCapacity").invoke(tank)).longValue();
+                    if (cap <= 0) continue;
+                    long stored = ((Number) tc.getMethod("getStored").invoke(tank)).longValue();
+                    String label = "overseer.gauge.chemical";
+                    int color = 0xFF9AA0A8;
+                    if (stored > 0) {
+                        Object chem = tc.getMethod("getType").invoke(tank);
+                        Object name = chem.getClass().getMethod("getTextComponent").invoke(chem);
+                        if (name instanceof net.minecraft.network.chat.Component c
+                                && c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tr) label = tr.getKey();
+                        color = 0xFF000000 | ((Number) chem.getClass().getMethod("getTint").invoke(chem)).intValue();
+                    }
+                    out.add(new Gauge(label, stored, cap, color, "mB"));
+                }
+                return out;
+            } catch (Throwable t) {
+                return List.of();
+            }
+        }
+    }
+
+    // ---------- power draw ----------
+
+    private record EnergyMark(long energy, long time) {}
+
+    private static final Map<GlobalPos, EnergyMark> MARKS = new HashMap<>();
+
+    /**
+     * Estimated FE/t a working machine is using. Mekanism reports its own usage; for anything else it's the drop in
+     * stored energy since the last call, which reads 0 while a cable keeps the buffer topped up. Generators (no
+     * insert) count as 0.
+     */
+    public static long draw(ServerLevel level, MachineEntry e) {
+        GlobalPos gp = GlobalPos.of(level.dimension(), e.pos());
+        long now = level.getGameTime();
+        EnergyMark prev = MARKS.put(gp, new EnergyMark(e.energy(), now));
+        if (MARKS.size() > 4096) MARKS.clear();
+        if (e.status() != MachineStatus.WORKING || e.energyMax() <= 0) return 0;
+        BlockEntity be = level.getBlockEntity(e.pos());
+        if (be == null) return 0;
+        EnergyHandler energy = cap(level, be, Capabilities.Energy.BLOCK);
+        if (energy == null) return 0;
+        Long mek = Mekanism.usage(be, e.energyMax());
+        if (mek != null) return mek;
+        if (e.energy() < e.energyMax()) {
+            try (var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                if (energy.insert(1, tx) == 0) return 0; // generator: it won't take power
+            }
+        }
+        if (prev == null || now <= prev.time) return 0;
+        return Math.max(0, prev.energy - e.energy()) / (now - prev.time);
+    }
+
+    /** Mekanism usage via reflection: sum of MachineEnergyContainer#getEnergyPerTick, scaled from joules to FE. */
+    static final class Mekanism {
+        private static final Map<Class<?>, Optional<Method>> CONTAINERS = new HashMap<>();
+
+        @Nullable
+        static Long usage(BlockEntity be, long feMax) {
+            Method m = CONTAINERS.computeIfAbsent(be.getClass(), c -> {
+                try {
+                    return Optional.of(c.getMethod("getEnergyContainers", Direction.class));
+                } catch (Throwable t) {
+                    return Optional.empty();
+                }
+            }).orElse(null);
+            if (m == null) return null;
+            try {
+                long perTick = 0, max = 0;
+                boolean found = false;
+                for (Object c : (List<?>) m.invoke(be, (Object) null)) {
+                    Method pt, mx;
+                    try {
+                        pt = c.getClass().getMethod("getEnergyPerTick");
+                        mx = c.getClass().getMethod("getMaxEnergy");
+                    } catch (NoSuchMethodException ex) {
+                        continue;
+                    }
+                    perTick += ((Number) pt.invoke(c)).longValue();
+                    max += ((Number) mx.invoke(c)).longValue();
+                    found = true;
+                }
+                if (!found) return null;
+                double ratio = max > 0 && feMax > 0 ? (double) feMax / max : 1;
+                return Math.round(perTick * ratio);
             } catch (Throwable t) {
                 return null;
             }

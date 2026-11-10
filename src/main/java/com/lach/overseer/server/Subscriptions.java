@@ -107,7 +107,50 @@ public final class Subscriptions {
             if (s.screen.isEmpty() && findTablet(p).isEmpty()) { it.remove(); continue; }
             send(p, s);
         }
-        for (ServerPlayer p : server.getPlayerList().getPlayers()) alerts(p);
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            alerts(p);
+            preview(p);
+        }
+    }
+
+    public static boolean previewOn(ItemStack tablet) {
+        return tablet.getOrDefault(Registry.PREVIEW.get(), true);
+    }
+
+    public static void togglePreview(ServerPlayer p) {
+        ItemStack tablet = findTablet(p);
+        if (tablet.isEmpty()) return;
+        tablet.set(Registry.PREVIEW.get(), !previewOn(tablet));
+    }
+
+    /** Players holding a tablet with the preview on get a summary for its screen every second. */
+    private static void preview(ServerPlayer p) {
+        ItemStack held = ItemStack.EMPTY;
+        for (InteractionHand h : InteractionHand.values()) {
+            ItemStack s = p.getItemInHand(h);
+            if (s.is(Registry.TABLET.get())) {
+                held = s;
+                break;
+            }
+        }
+        if (held.isEmpty() || !previewOn(held)) return;
+        ServerLevel level = (ServerLevel) p.level();
+        List<MachineEntry> list = Machines.scan(level, p.blockPosition(), Config.SCAN_RADIUS.get(), List.of());
+        int[] n = new int[4];
+        long e = 0, em = 0, draw = 0;
+        for (MachineEntry m : list) {
+            switch (m.status()) {
+                case WORKING -> n[0]++;
+                case IDLE, CHECKING -> n[1]++;
+                case OUTPUT_FULL -> n[2]++;
+                case NO_POWER -> n[3]++;
+                default -> {}
+            }
+            e += m.energy();
+            em += m.energyMax();
+            draw += Machines.draw(level, m);
+        }
+        PacketDistributor.sendToPlayer(p, new Net.Preview(n[0], n[1], n[2], n[3], e, em, draw));
     }
 
     private static void alerts(ServerPlayer p) {

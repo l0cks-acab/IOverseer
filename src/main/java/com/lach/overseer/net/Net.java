@@ -42,6 +42,32 @@ public final class Net {
         @Override public Type<TogglePin> type() { return TYPE; }
     }
 
+    /** C2S: flip the live preview on the player's tablet. */
+    public record TogglePreview() implements CustomPacketPayload {
+        public static final Type<TogglePreview> TYPE = new Type<>(Overseer.id("toggle_preview"));
+        public static final StreamCodec<ByteBuf, TogglePreview> CODEC = StreamCodec.unit(new TogglePreview());
+        @Override public Type<TogglePreview> type() { return TYPE; }
+    }
+
+    /** S2C: summary for the held tablet's screen. Counts are working, idle, output full, no power. */
+    public record Preview(int working, int idle, int full, int noPower, long energy, long energyMax, long draw) implements CustomPacketPayload {
+        public static final Type<Preview> TYPE = new Type<>(Overseer.id("preview"));
+        public static final StreamCodec<ByteBuf, Preview> CODEC = StreamCodec.of(
+                (buf, p) -> {
+                    ByteBufCodecs.VAR_INT.encode(buf, p.working);
+                    ByteBufCodecs.VAR_INT.encode(buf, p.idle);
+                    ByteBufCodecs.VAR_INT.encode(buf, p.full);
+                    ByteBufCodecs.VAR_INT.encode(buf, p.noPower);
+                    ByteBufCodecs.VAR_LONG.encode(buf, p.energy);
+                    ByteBufCodecs.VAR_LONG.encode(buf, p.energyMax);
+                    ByteBufCodecs.VAR_LONG.encode(buf, p.draw);
+                },
+                buf -> new Preview(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+                        ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf),
+                        ByteBufCodecs.VAR_LONG.decode(buf)));
+        @Override public Type<Preview> type() { return TYPE; }
+    }
+
     /** S2C: machine list. */
     public record Snapshot(List<MachineEntry> entries, int radius) implements CustomPacketPayload {
         public static final Type<Snapshot> TYPE = new Type<>(Overseer.id("snapshot"));
@@ -64,6 +90,8 @@ public final class Net {
         r.playToServer(Watch.TYPE, cast(Watch.CODEC), (p, ctx) -> ctx.enqueueWork(() -> Subscriptions.watch((ServerPlayer) ctx.player(), p.screen())));
         r.playToServer(Unwatch.TYPE, cast(Unwatch.CODEC), (p, ctx) -> ctx.enqueueWork(() -> Subscriptions.unwatch((ServerPlayer) ctx.player())));
         r.playToServer(TogglePin.TYPE, cast(TogglePin.CODEC), (p, ctx) -> ctx.enqueueWork(() -> Subscriptions.togglePin((ServerPlayer) ctx.player(), p.pos())));
+        r.playToServer(TogglePreview.TYPE, cast(TogglePreview.CODEC), (p, ctx) -> ctx.enqueueWork(() -> Subscriptions.togglePreview((ServerPlayer) ctx.player())));
+        r.playToClient(Preview.TYPE, cast(Preview.CODEC), (p, ctx) -> ctx.enqueueWork(() -> com.lach.overseer.client.ClientHooks.preview(p)));
         r.playToClient(Snapshot.TYPE, cast(Snapshot.CODEC), (p, ctx) -> ctx.enqueueWork(() -> com.lach.overseer.client.ClientHooks.snapshot(p)));
         r.playToClient(Alert.TYPE, cast(Alert.CODEC), (p, ctx) -> ctx.enqueueWork(() -> com.lach.overseer.client.ClientHooks.alert(p)));
     }

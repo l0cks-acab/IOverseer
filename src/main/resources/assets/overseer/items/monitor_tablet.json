@@ -1,1 +1,23 @@
-{ "model": { "type": "minecraft:model", "model": "overseer:item/monitor_tablet" } }
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": ["gui", "ground", "fixed"],
+        "model": { "type": "minecraft:model", "model": "overseer:item/monitor_tablet" }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:composite",
+      "models": [
+        { "type": "minecraft:model", "model": "overseer:item/monitor_tablet" },
+        {
+          "type": "minecraft:special",
+          "base": "overseer:item/monitor_tablet",
+          "model": { "type": "overseer:tablet_preview" }
+        }
+      ]
+    }
+  }
+}

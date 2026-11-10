@@ -37,6 +37,13 @@ public final class Registry {
                     .networkSynchronized(GlobalPos.STREAM_CODEC.apply(ByteBufCodecs.list()))
                     .build());
 
+    /** Live preview on the tablet's screen while held. Missing = on. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> PREVIEW = COMPONENTS.register("preview",
+            () -> DataComponentType.<Boolean>builder()
+                    .persistent(com.mojang.serialization.Codec.BOOL)
+                    .networkSynchronized(ByteBufCodecs.BOOL)
+                    .build());
+
     public static final DeferredItem<MonitorTabletItem> TABLET = ITEMS.registerItem("monitor_tablet",
             MonitorTabletItem::new, p -> p.stacksTo(1));
 

@@ -45,6 +45,11 @@ public final class ClientEvents {
     }
 
     @SubscribeEvent
+    static void specialRenderers(net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent e) {
+        e.register(Overseer.id("tablet_preview"), TabletRenderer.Unbaked.MAP_CODEC);
+    }
+
+    @SubscribeEvent
     static void pipelines(RegisterRenderPipelinesEvent e) {
         e.registerPipeline(OverseerRenderTypes.XRAY_LINES_PIPELINE);
     }

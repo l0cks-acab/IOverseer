@@ -95,7 +95,7 @@ def front():
 
 def tablet():
     im = img()
-    x0, y0, x1, y1 = 3, 1, 12, 14
+    x0, y0, x1, y1 = 2, 1, 13, 14
     rect(im, x0, y0, x1, y1, STEEL)
     frame(im, x0, y0, x1, y1, DARK)
     for x in range(x0 + 1, x1):
