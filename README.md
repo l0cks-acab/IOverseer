@@ -41,7 +41,7 @@ It works from the standard NeoForge energy, item and fluid capabilities, so it n
 - Ars Nouveau machines with no Source show No power.
 - Power draw uses Mekanism's own usage figure, and for other mods the drop in stored energy (which reads 0 while cables keep a machine topped up).
 
-Storage blocks such as chests and barrels are skipped. Add blocks to the `overseer:ignored` tag to hide them, or to `overseer:machines` to force them in.
+Storage blocks such as chests and barrels are skipped. Add blocks to the `ioverseer:ignored` tag to hide them, or to `ioverseer:machines` to force them in.
 
 ## Config (server)
 `scanRadius`, `maxMachines`, `idleSeconds`, `maxItemOnlySlots`, `maxPins`.

@@ -3,7 +3,7 @@ import os
 import sys
 from PIL import Image
 
-ROOT = sys.argv[1] if len(sys.argv) > 1 else "src/main/resources/assets/overseer/textures"
+ROOT = sys.argv[1] if len(sys.argv) > 1 else "src/main/resources/assets/ioverseer/textures"
 H = lambda s: tuple(int(s[i:i + 2], 16) for i in (1, 3, 5)) + (255,)
 DARK, STEEL, STEEL2, LIGHT, HI = H("#1E2126"), H("#3A3E46"), H("#454A53"), H("#5C616B"), H("#7E848F")
 GOLD, GOLD_DIM, GOLD_HI = H("#E8B23A"), H("#8C6418"), H("#FFE08A")

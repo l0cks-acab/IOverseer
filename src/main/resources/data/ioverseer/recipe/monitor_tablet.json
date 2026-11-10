@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["IPI", "RCR", "IGI"],
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "P": { "item": "minecraft:glass_pane" },
+    "R": { "item": "minecraft:redstone" },
+    "C": { "item": "minecraft:comparator" },
+    "G": { "item": "minecraft:gold_ingot" }
+  },
+  "result": { "id": "ioverseer:monitor_tablet", "count": 1 }
+}
