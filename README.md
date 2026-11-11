@@ -37,7 +37,7 @@ It works from the standard NeoForge energy, item and fluid capabilities, so it n
 - No power: the energy buffer is empty, or a furnace has input but no fuel.
 - Working: the block shows a lit or active state, or its energy, items or fluids changed in the last few seconds.
 - Output full: the machine is idle and a slot or tank is full.
-- Create kinetic blocks with an inventory show No power when stalled or overstressed.
+- Create: any block that draws stress (press, mixer, millstone, saw, drill, fan...) is listed. Details show speed (RPM), network stress vs capacity (SU) and what the block itself uses. Stalled or overstressed blocks show No power. The held tablet preview flips to SU when Create machines are nearby.
 - Ars Nouveau machines with no Source show No power.
 - Power draw uses Mekanism's own usage figure, and for other mods the drop in stored energy (which reads 0 while cables keep a machine topped up).
 

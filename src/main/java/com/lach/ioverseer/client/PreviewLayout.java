@@ -35,8 +35,11 @@ public final class PreviewLayout {
             p.quad(0, sweep, W, Math.min(H, sweep + 0.25f), 0x30FFC24A, 1);
             return;
         }
-        // power draw
-        String v = TabletPreview.fmt(d.draw()), unit = " FE/t";
+        // FE/t, or Create stress; with both nearby it flips every 4 s
+        boolean hasFe = d.energyMax() > 0 || d.draw() > 0;
+        boolean hasSu = d.suCap() > 0 || d.su() > 0;
+        boolean su = hasSu && (!hasFe || (ms / 4000) % 2 == 1);
+        String v = TabletPreview.fmt(su ? d.su() : d.draw()), unit = su ? " SU" : " FE/t";
         float sc = Math.min(0.17f, (W - 1.2f) / (p.width(v + unit)));
         p.text(v, 0.4f, 0.35f, sc, Theme.AMBER);
         p.text(unit, 0.4f + p.width(v) * sc, 0.35f, sc, Theme.AMBER_DIM);
@@ -46,7 +49,7 @@ public final class PreviewLayout {
         // draw graph, newest on the right
         float gx0 = 0.4f, gx1 = W - 0.4f, gy0 = 2.0f, gy1 = 4.7f;
         for (float gy = gy0; gy < gy1; gy += 0.9f) p.quad(gx0, gy, gx1, gy + 0.05f, 0xFF1E1708, 1);
-        long[] h = TabletPreview.history();
+        long[] h = TabletPreview.history(su);
         int n = TabletPreview.count();
         long max = 1;
         for (long x : h) max = Math.max(max, x);
@@ -55,15 +58,20 @@ public final class PreviewLayout {
         for (int i = TabletPreview.HISTORY - n; i < TabletPreview.HISTORY; i++) {
             float bh = h[i] <= 0 ? 0.06f : Math.max(0.12f, h[i] / (float) max * (gy1 - gy0));
             float bx = gx0 + i * bw;
-            int c = i == TabletPreview.HISTORY - 1 ? Theme.GOLD_HI : Theme.GOLD;
+            int c = su ? (i == TabletPreview.HISTORY - 1 ? 0xFF7FE3F2 : Theme.IO) : (i == TabletPreview.HISTORY - 1 ? Theme.GOLD_HI : Theme.GOLD);
             p.quad(bx + 0.04f, gy1 - bh, bx + bw - 0.04f, gy1, c, 2);
         }
         p.quad(gx0, gy1, gx1, gy1 + 0.08f, Theme.AMBER_DIM, 2);
 
-        // stored energy
+        // stored energy, or network stress against capacity
         float ey0 = 5.1f, ey1 = 5.6f;
         p.quad(gx0, ey0, gx1, ey1, 0xFF2A2D33, 1);
-        if (d.energyMax() > 0) {
+        if (su) {
+            if (d.suCap() > 0) {
+                float f = d.suStress() <= 0 ? 0 : Math.max(0.04f, Math.min(1f, d.suStress() / (float) d.suCap()));
+                p.quad(gx0, ey0, gx0 + (gx1 - gx0) * f, ey1, d.suStress() > d.suCap() ? 0xFFE5484D : 0xFFE5A23C, 2);
+            }
+        } else if (d.energyMax() > 0) {
             float f = Math.min(1f, d.energy() / (float) d.energyMax());
             p.quad(gx0, ey0, gx0 + (gx1 - gx0) * f, ey1, 0xFFE5484D, 2);
         }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+- Create support (built against Create 6 for 1.21.1; Create has no 26.1 build yet, so untested here): machines that draw stress are listed (press, mixer, millstone, saw, drill, fan and so on), not just ones with an inventory.
+- Details panel shows Speed (RPM), network Stress (SU used vs capacity, red when overstressed) and the SU the block itself uses.
+- Held tablet preview shows nearby Create SU use with its own graph and a stress bar. With FE machines nearby too, it flips between FE/t and SU every 4 seconds.
+- Depots, vaults, chutes, funnels and tunnels are no longer listed.
+
 ## 0.2.1
 - Renamed to I/Overseer (another mod already uses the name Overseer). The I/O in the name is shown in cyan for Input/Output.
 

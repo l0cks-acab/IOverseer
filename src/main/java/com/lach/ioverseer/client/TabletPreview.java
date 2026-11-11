@@ -11,6 +11,7 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 public final class TabletPreview {
     public static final int HISTORY = 16;
     private static final long[] DRAW = new long[HISTORY];
+    private static final long[] SU = new long[HISTORY];
     private static int count;
     private static Net.Preview latest;
     private static long receivedAt;
@@ -20,6 +21,8 @@ public final class TabletPreview {
     public static void accept(Net.Preview p) {
         System.arraycopy(DRAW, 1, DRAW, 0, HISTORY - 1);
         DRAW[HISTORY - 1] = p.draw();
+        System.arraycopy(SU, 1, SU, 0, HISTORY - 1);
+        SU[HISTORY - 1] = p.su();
         count = Math.min(HISTORY, count + 1);
         latest = p;
         receivedAt = System.currentTimeMillis();
@@ -34,8 +37,8 @@ public final class TabletPreview {
         return latest;
     }
 
-    public static long[] history() {
-        return DRAW;
+    public static long[] history(boolean su) {
+        return su ? SU : DRAW;
     }
 
     public static int count() {
