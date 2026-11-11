@@ -38,7 +38,7 @@ public final class Machines {
     /** Block id words that mean energy storage or transport, not a machine. Add others to the ioverseer:ignored tag. */
     private static final List<String> STORAGE_WORDS = List.of("energy_cell", "energy_cube", "battery", "capacitor", "cable",
             "conduit", "wire", "accumulator", "induction", "energy_storage", "flux_point", "flux_plug", "flux_controller", "transmitter",
-            "chemical_tank", "fluid_tank", "source_jar", "relay");
+            "chemical_tank", "fluid_tank", "source_jar", "relay", "depot", "vault", "chute", "funnel", "tunnel");
     private static final Set<String> ACTIVE_PROPS = Set.of("lit", "active", "working", "running", "is_active", "on");
 
     private record History(long sig, long lastChange, long firstSeen, long lastSeen) {}
@@ -105,6 +105,8 @@ public final class Machines {
         if (state.is(FORCED)) return true;
         if (be instanceof AbstractFurnaceBlockEntity) return true;
         if (Create.isKinetic(be)) {
+            Create.Info k = Create.info(be);
+            if (k != null && k.impact() > 0) return true; // anything that draws stress: press, mixer, saw, fan, drill
             return cap(level, be, Capabilities.ItemHandler.BLOCK) != null || cap(level, be, Capabilities.FluidHandler.BLOCK) != null;
         }
         IEnergyStorage energy = cap(level, be, Capabilities.EnergyStorage.BLOCK);
@@ -168,12 +170,14 @@ public final class Machines {
                 if (capT > 0 && amt >= capT) anyFull = true;
             }
         }
-        List<Gauge> gauges = new ArrayList<>(Ars.gauges(be));
+        Create.Info kin = Create.info(be);
+        List<Gauge> gauges = new ArrayList<>(Create.gauges(kin));
+        gauges.addAll(Ars.gauges(be));
         gauges.addAll(MekChemicals.gauges(be));
         if (gauges.size() > 4) gauges = new ArrayList<>(gauges.subList(0, 4));
         long gaugeMax = 0, gaugeAmt = 0;
         for (Gauge g : gauges) {
-            sig = sig * 31 + g.amount();
+            if (!"su".equals(g.unit())) sig = sig * 31 + g.amount();
             gaugeMax += g.max();
             gaugeAmt += g.amount();
         }
@@ -181,7 +185,6 @@ public final class Machines {
         Boolean active = null;
         BooleanProperty prop = activeProperty(state);
         if (prop != null) active = state.getValue(prop);
-        Create.Info kin = Create.info(be);
         if (kin != null) sig = sig * 31 + Float.floatToIntBits(kin.speed());
 
         GlobalPos gp = GlobalPos.of(level.dimension(), pos);
@@ -203,7 +206,7 @@ public final class Machines {
             status = MachineStatus.NO_POWER;
         } else if (sourceOnly && gauges.get(0).max() > 0 && gauges.get(0).amount() == 0 && !changing) {
             status = MachineStatus.NO_POWER; // Ars machine with no Source
-        } else if (Boolean.TRUE.equals(active) || changing) {
+        } else if (Boolean.TRUE.equals(active) || changing || (kin != null && slots == 0 && fm == 0)) {
             status = MachineStatus.WORKING;
         } else if (be instanceof AbstractFurnaceBlockEntity && items != null && slots >= 2
                 && items.getStackInSlot(1).isEmpty() && !items.getStackInSlot(0).isEmpty()) {
@@ -258,12 +261,18 @@ public final class Machines {
     }
 
     /** Create support via reflection so there's no hard dependency. */
-    static final class Create {
-        record Info(float speed, boolean overStressed) {}
+    public static final class Create {
+        /** speed in RPM, impact = SU per RPM this block applies, network stress / capacity in SU. */
+        public record Info(float speed, boolean overStressed, float impact, float stress, float capacity, @Nullable Long network) {
+            public long usage() {
+                return (long) Math.abs(impact * speed);
+            }
+        }
 
         private static boolean tried;
         private static Class<?> kinetic;
-        private static Method getSpeed, isOverStressed;
+        private static Method getSpeed, isOverStressed, stressApplied;
+        private static java.lang.reflect.Field stressF, capacityF, networkF;
 
         private static void init() {
             if (tried) return;
@@ -272,6 +281,12 @@ public final class Machines {
                 kinetic = Class.forName("com.simibubi.create.content.kinetics.base.KineticBlockEntity");
                 getSpeed = kinetic.getMethod("getSpeed");
                 isOverStressed = kinetic.getMethod("isOverStressed");
+                stressApplied = kinetic.getMethod("calculateStressApplied");
+                stressF = kinetic.getDeclaredField("stress");
+                capacityF = kinetic.getDeclaredField("capacity");
+                networkF = kinetic.getField("network");
+                stressF.setAccessible(true);
+                capacityF.setAccessible(true);
             } catch (Throwable t) {
                 kinetic = null;
             }
@@ -283,13 +298,26 @@ public final class Machines {
         }
 
         @Nullable
-        static Info info(BlockEntity be) {
+        public static Info info(BlockEntity be) {
             if (!isKinetic(be)) return null;
             try {
-                return new Info((float) getSpeed.invoke(be), (boolean) isOverStressed.invoke(be));
+                return new Info((float) getSpeed.invoke(be), (boolean) isOverStressed.invoke(be), (float) stressApplied.invoke(be),
+                        stressF.getFloat(be), capacityF.getFloat(be), (Long) networkF.get(be));
             } catch (Throwable t) {
                 return null;
             }
+        }
+
+        static List<Gauge> gauges(@Nullable Info k) {
+            if (k == null) return List.of();
+            List<Gauge> out = new ArrayList<>();
+            out.add(new Gauge("ioverseer.gauge.speed", (long) Math.abs(k.speed()), 256, 0xFF3EC8E0, "rpm"));
+            long cap = (long) k.capacity();
+            if (cap > 0 || k.stress() > 0) {
+                out.add(new Gauge("ioverseer.gauge.stress", (long) k.stress(), cap, k.overStressed() ? 0xFFE5484D : 0xFFE5A23C, "su"));
+            }
+            if (k.impact() > 0) out.add(new Gauge("ioverseer.gauge.su_used", k.usage(), Math.max(1, (long) k.stress()), 0xFFB98C43, "su"));
+            return out;
         }
     }
 

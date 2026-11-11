@@ -137,8 +137,15 @@ public final class Subscriptions {
         ServerLevel level = p.serverLevel();
         List<MachineEntry> list = Machines.scan(level, p.blockPosition(), Config.SCAN_RADIUS.get(), List.of());
         int[] n = new int[4];
-        long e = 0, em = 0, draw = 0;
+        long e = 0, em = 0, draw = 0, su = 0;
+        java.util.Map<Long, float[]> networks = new java.util.HashMap<>();
         for (MachineEntry m : list) {
+            var be = level.isLoaded(m.pos()) ? level.getBlockEntity(m.pos()) : null;
+            Machines.Create.Info k = be == null ? null : Machines.Create.info(be);
+            if (k != null) {
+                su += k.usage();
+                networks.put(k.network() == null ? -m.pos().asLong() : k.network(), new float[]{k.stress(), k.capacity()});
+            }
             switch (m.status()) {
                 case WORKING -> n[0]++;
                 case IDLE, CHECKING -> n[1]++;
@@ -150,7 +157,8 @@ public final class Subscriptions {
             em += m.energyMax();
             draw += Machines.draw(level, m);
         }
-        PacketDistributor.sendToPlayer(p, new Net.Preview(n[0], n[1], n[2], n[3], e, em, draw));
+        PacketDistributor.sendToPlayer(p, new Net.Preview(n[0], n[1], n[2], n[3], e, em, draw, su,
+                (long) networks.values().stream().mapToDouble(v -> v[0]).sum(), (long) networks.values().stream().mapToDouble(v -> v[1]).sum()));
     }
 
     private static void alerts(ServerPlayer p) {

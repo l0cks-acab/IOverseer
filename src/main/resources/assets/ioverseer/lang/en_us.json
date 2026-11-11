@@ -37,5 +37,8 @@
   "ioverseer.msg.pinned": "Machine pinned",
   "ioverseer.msg.unpinned": "Machine unpinned",
   "ioverseer.msg.not_machine": "Not a machine I/Overseer can read",
-  "ioverseer.msg.need_tablet": "You need an I/Overseer Tablet to pin machines"
+  "ioverseer.msg.need_tablet": "You need an I/Overseer Tablet to pin machines",
+  "ioverseer.gauge.speed": "Speed RPM",
+  "ioverseer.gauge.stress": "Stress SU",
+  "ioverseer.gauge.su_used": "Uses SU"
 }

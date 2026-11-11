@@ -50,7 +50,7 @@ public final class Net {
     }
 
     /** S2C: summary for the held tablet's screen. Counts are working, idle, output full, no power. */
-    public record Preview(int working, int idle, int full, int noPower, long energy, long energyMax, long draw) implements CustomPacketPayload {
+    public record Preview(int working, int idle, int full, int noPower, long energy, long energyMax, long draw, long su, long suStress, long suCap) implements CustomPacketPayload {
         public static final Type<Preview> TYPE = new Type<>(IOverseer.id("preview"));
         public static final StreamCodec<ByteBuf, Preview> CODEC = StreamCodec.of(
                 (buf, p) -> {
@@ -61,9 +61,13 @@ public final class Net {
                     ByteBufCodecs.VAR_LONG.encode(buf, p.energy);
                     ByteBufCodecs.VAR_LONG.encode(buf, p.energyMax);
                     ByteBufCodecs.VAR_LONG.encode(buf, p.draw);
+                    ByteBufCodecs.VAR_LONG.encode(buf, p.su);
+                    ByteBufCodecs.VAR_LONG.encode(buf, p.suStress);
+                    ByteBufCodecs.VAR_LONG.encode(buf, p.suCap);
                 },
                 buf -> new Preview(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
                         ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf),
+                        ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf),
                         ByteBufCodecs.VAR_LONG.decode(buf)));
         @Override public Type<Preview> type() { return TYPE; }
     }
