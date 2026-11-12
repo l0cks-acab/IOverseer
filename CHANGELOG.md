@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+- Held tablet FE/t no longer drops to 0 when two or more players hold a tablet near the same machines.
+- The wall screen keeps updating when only spectators are nearby.
+- Create belts are no longer listed as machines.
+- Stalled Create machines no longer show an empty "Uses 0/1 SU" gauge.
+
 ## 0.3.0
 - Create support: machines that draw stress are listed (press, mixer, millstone, saw, drill, fan and so on), not just ones with an inventory.
 - Details panel shows Speed (RPM), network Stress (SU used vs capacity, red when overstressed) and the SU the block itself uses.

@@ -35,7 +35,8 @@ public class MonitorScreenBlockEntity extends BlockEntity {
 
     void serverTick() {
         if (++tick % 20 != 0 || !(level instanceof ServerLevel sl)) return;
-        if (!sl.hasNearbyAlivePlayer(worldPosition.getX() + .5, worldPosition.getY() + .5, worldPosition.getZ() + .5, 32)) return;
+        net.minecraft.world.phys.Vec3 c = worldPosition.getCenter();
+        if (sl.players().stream().noneMatch(p -> p.distanceToSqr(c) < 32 * 32)) return; // spectators count too
         List<MachineEntry> list = new ArrayList<>(Machines.scan(sl, worldPosition, Config.SCAN_RADIUS.get(), List.of()));
         list.sort(Comparator.comparingInt((MachineEntry e) -> e.status().ordinal()).thenComparingDouble(e -> e.pos().distSqr(worldPosition)));
         if (!list.equals(entries)) {
