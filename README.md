@@ -28,6 +28,10 @@ NeoForge 1.21.1. No dependencies.
 
 ![Mekanism chemicals in the details panel](docs/mod-resources.png)
 
+| Create stress | Create SU on the held tablet |
+| --- | --- |
+| ![Create speed, network stress and SU used](docs/create-stress.png) | ![Create SU on the held tablet](docs/create-preview.png) |
+
 ## Recipes
 - **I/Overseer Tablet**: iron / glass pane / iron, redstone / comparator / redstone, iron / gold ingot / iron.
 - **I/Overseer Screen**: 3 iron on top, glass pane / I/Overseer Tablet / glass pane, gold ingot / redstone block / gold ingot.
