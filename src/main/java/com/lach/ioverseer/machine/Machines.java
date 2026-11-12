@@ -38,7 +38,7 @@ public final class Machines {
     /** Block id words that mean energy storage or transport, not a machine. Add others to the ioverseer:ignored tag. */
     private static final List<String> STORAGE_WORDS = List.of("energy_cell", "energy_cube", "battery", "capacitor", "cable",
             "conduit", "wire", "accumulator", "induction", "energy_storage", "flux_point", "flux_plug", "flux_controller", "transmitter",
-            "chemical_tank", "fluid_tank", "source_jar", "relay", "depot", "vault", "chute", "funnel", "tunnel");
+            "chemical_tank", "fluid_tank", "source_jar", "relay", "depot", "vault", "chute", "funnel", "tunnel", "belt");
     private static final Set<String> ACTIVE_PROPS = Set.of("lit", "active", "working", "running", "is_active", "on");
 
     private record History(long sig, long lastChange, long firstSeen, long lastSeen) {}
@@ -104,6 +104,7 @@ public final class Machines {
         if (state.is(IGNORED)) return false;
         if (state.is(FORCED)) return true;
         if (be instanceof AbstractFurnaceBlockEntity) return true;
+        if (isEnergyStorage(state)) return false; // batteries, cells, cables, tanks, jars, belts
         if (Create.isKinetic(be)) {
             Create.Info k = Create.info(be);
             if (k != null && k.impact() > 0) return true; // anything that draws stress: press, mixer, saw, fan, drill
@@ -317,7 +318,7 @@ public final class Machines {
             if (cap > 0 || k.stress() > 0) {
                 out.add(new Gauge("ioverseer.gauge.stress", (long) k.stress(), cap, k.overStressed() ? 0xFFE5484D : 0xFFE5A23C, "su"));
             }
-            if (k.impact() > 0) out.add(new Gauge("ioverseer.gauge.su_used", k.usage(), Math.max(1, (long) k.stress()), 0xFFB98C43, "su"));
+            if (k.usage() > 0 && k.stress() > 0) out.add(new Gauge("ioverseer.gauge.su_used", k.usage(), (long) k.stress(), 0xFFB98C43, "su"));
             return out;
         }
     }
@@ -406,7 +407,7 @@ public final class Machines {
 
     // ---------- power draw ----------
 
-    private record EnergyMark(long energy, long time) {}
+    private record EnergyMark(long energy, long time, long draw) {}
 
     private static final Map<GlobalPos, EnergyMark> MARKS = new HashMap<>();
 
@@ -418,8 +419,15 @@ public final class Machines {
     public static long draw(ServerLevel level, MachineEntry e) {
         GlobalPos gp = GlobalPos.of(level.dimension(), e.pos());
         long now = level.getGameTime();
-        EnergyMark prev = MARKS.put(gp, new EnergyMark(e.energy(), now));
+        EnergyMark prev = MARKS.get(gp);
+        if (prev != null && prev.time == now) return prev.draw; // another player already read it this tick
+        long d = drawNow(level, e, prev, now);
         if (MARKS.size() > 4096) MARKS.clear();
+        MARKS.put(gp, new EnergyMark(e.energy(), now, d));
+        return d;
+    }
+
+    private static long drawNow(ServerLevel level, MachineEntry e, @Nullable EnergyMark prev, long now) {
         if (e.status() != MachineStatus.WORKING || e.energyMax() <= 0) return 0;
         BlockEntity be = level.getBlockEntity(e.pos());
         if (be == null) return 0;
